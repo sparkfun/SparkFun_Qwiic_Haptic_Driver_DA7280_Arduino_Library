@@ -5,10 +5,13 @@
 #include <Arduino.h>
 
 #define DEF_ADDR 0x4A
-#define CHIP_REV 0xAB
-#define 
+#define CHIP_REV 0xBA
 
-enum {
+enum ACTUATOR_TYPE {
+
+};
+
+enum REGISTERS {
   CHIP_REV_REG = 0x00,
   IRQ_EVENT1 = 0x03, 
   IRQ_EVENT_WARN_DIAG = 0x04, 
@@ -17,9 +20,23 @@ enum {
   IRQ_MASK1 = 0x07, 
   CIF_I2C1 = 0x08, 
   FRQ_LRA_PER_H = 0x0A, 
+  TOP_CFG1 = 0x0D
 };
 
-enum {
+enum BIT_POSITIONS {
+
+  POS_ZERO = 0x00, 
+  POS_ONE = 0x01, 
+  POS_TWO = 0x02, 
+  POS_THREE = 0x03, 
+  POS_FOUR = 0x04, 
+  POS_FIVE = 0x05, 
+  POS_SIX = 0x06, 
+  POS_SEVEN = 0x07 
+
+};
+
+enum REG_MASKS {
   I2C_WR_MASK = 0x7F 
 };
 
@@ -30,9 +47,11 @@ class Haptic_Driver
     // Public Variables
     
     //Function declarations
-    Haptic_Driver(uint8_t); // I2C Constructor
+    Haptic_Driver(uint8_t address = DEF_ADDR); // I2C Constructor
 
     bool begin(TwoWire &wirePort = Wire); // begin function
+
+    bool setActuator(uint8_t);
 
   private:
     
@@ -43,21 +62,21 @@ class Haptic_Driver
     // bits in an eight bit register. Paramaters include the register's address, a mask 
     // for bits that are ignored, the bits to write, and the bits' starting
     // position.
-    void _writeRegister(uint8_t, uint8_t, uint8_t, uint8_t);
+    bool _writeRegister(uint8_t, uint8_t, uint8_t, uint8_t);
 
     // Consecutive Write Mode: I2C_WR_MODE = 0
     // Allows for n-number of writes on consecutive registers, beginning at the
     // given register. 
     // This particular write does not care what is currently in the register and
     // overwrites whatever is there.
-    uint8_t _writeConsReg(uint8_t*);
+    uint8_t _writeConsReg(uint8_t regs[], size_t);
 
     // Non-Consecutive Write Mode: I2C_WR_MODE = 1
     // Allows for n-number of writes on non-consecutive registers, beginning at the
     // given register but able to jump locations by giving another address. 
     // This particular write does not care what is currently in the register and
     // overwrites whatever is there.
-    uint8_t _writeNonConsReg(uint8_t*);
+    uint8_t _writeNonConsReg(uint8_t regs[], size_t);
 
     // This generic function does a basic I-squared-C write transaction at the
     // given address, and writes the given _command argument. 
@@ -67,8 +86,8 @@ class Haptic_Driver
     // address as its' parameter. 
     uint8_t _readRegister(uint8_t);
 
-    uint8_t _readConsReg(uint8_t, uint8_t);
-    uint8_t _readNonConsReg(uint8_t);
+    bool _readConsReg(uint8_t regs[], size_t);
+    bool _readNonConsReg(uint8_t regs[], size_t);
     // This generic function does a basic I-squared-C read transaction at the given
     // addres, taking the number of reads as argument. 
     uint8_t _readCommand(uint8_t);
