@@ -36,8 +36,54 @@ bool Haptic_Driver::setActuator(uint8_t actuator){
   if( actuator != 0 || actuator != 1 )
     return false; 
 
-  if( _writeRegister( TOP_CFG1, 0b11011111, actuator, POS_FIVE ) )
+  if( _writeRegister( TOP_CFG1, R_POS_FIVE, actuator, POS_FIVE ) )
     return true; 
+  else
+    return false; 
+}
+
+bool Haptic_Driver::setOperationMode(uint8_t mode){ 
+
+  if( mode < 0 || mode > 3)
+    return false;
+
+  if( _writeRegister(TOP_CTL1, mask, mode, POS_ZERO) ) 
+    return true; 
+  else
+    return false; 
+
+}
+
+bool Haptic_Driver::writeI2CWave(uint8_t wave){
+
+  uint8_t accelState = _readRegister(TOP_CFG1);
+  accelState = accelState || R_POS_TWO; 
+  accelState = accelState >> POS_TWO;  
+
+  if( accelState == ENABLE ){
+    if( wave < 0x00 || wave > 0x7F ) 
+      return false;
+  }
+  else {
+    if( wave < 0x00 || wave > 0xFF ) 
+      return false;
+  }
+
+  if( _writeRegister(TOP_CTL2, BIT_VAL_ZERO, wave, POS_ZERO) )
+    return true;
+  else
+    return false; 
+  
+}
+
+bool Haptic_Driver::setDefaultSettings(){
+  setActuator( 
+
+  if( _writeRegister( , , , ) )
+    return true;
+  else
+    return false; 
+  
 }
 
 // This generic function handles I2C write commands for modifying individual

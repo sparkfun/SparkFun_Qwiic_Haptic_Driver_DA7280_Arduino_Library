@@ -6,38 +6,138 @@
 
 #define DEF_ADDR 0x4A
 #define CHIP_REV 0xBA
+#define ENABLE 0x01
+#define DISABLE 0x00
 
 enum ACTUATOR_TYPE {
 
 };
 
 enum REGISTERS {
-  CHIP_REV_REG = 0x00,
+
+  CHIP_REV_REG = 0x00, //whoami?
+  
   IRQ_EVENT1 = 0x03, 
   IRQ_EVENT_WARN_DIAG = 0x04, 
   IRQ_EVENT_SEQ_DIAG = 0x05, 
   IRQ_STATUS1 = 0x06, 
   IRQ_MASK1 = 0x07, 
+
   CIF_I2C1 = 0x08, 
+
   FRQ_LRA_PER_H = 0x0A, 
-  TOP_CFG1 = 0x0D
+  FRQ_LRA_PER_L = 0x0B, 
+
+  ACTUATOR1 = 0x0C, 
+  ACTUATOR2 = 0x0D, 
+  ACTUATOR3 = 0x0E, 
+
+  CALIB_V2I_H = 0x0F, 
+  CALIB_V2I_L = 0x10, 
+
+  CALIB_IMP_H = 0x11, 
+  CALIB_IMP_L = 0x12, 
+
+  TOP_CFG1 = 0x13,
+  TOP_CFG2 = 0x14,
+  TOP_CFG3 = 0x15,
+  TOP_CFG4 = 0x16,
+
+  TOP_INT_CFG1 = 0x17,
+  TOP_INT_CFG6_H = 0x1C,
+  TOP_INT_CFG6_L = 0x1D,
+  TOP_INT_CFG7_H = 0x1E,
+  TOP_INT_CFG7_L = 0x1F,
+  TOP_INT_CFG8 = 0x20,
+
+  TOP_CTL1 = 0x22,
+  TOP_CTL2 = 0x23,
+  SEG_CTL1 = 0x24,
+
+  SWG_C1 = 0x25,
+  SWG_C2 = 0x26,
+  SWG_C3 = 0x27,
+  SEQ_CTL2 = 0x28,
+
+  GPI_0_CTL = 0x29,
+  GPI_1_CTL = 0x2A,
+  GPI_2_CTL = 0x2B,
+
+  MEM_CTL1 = 0x2C,
+  MEM_CTL2 = 0x2D,
+  
+  ADC_DATA_H1 = 0x2E,
+  ADC_DATA_L1 = 0x2F,
+
+  POLARITY = 0x43,
+  LRA_AVR_H = 0x44,
+  LRA_AVR_L = 0x45,
+
+  FRQ_LRA_PER_ACT_H = 0x46,
+  FRQ_LRA_PER_ACT_L = 0x47,
+
+  FRQ_PHASE_H = 0x48,
+  FRQ_PHASE_L = 0x49,
+  FRQ_CTL = 0x4C,
+
+  TRIM3 = 0x5F,
+  TRIM4 = 0x60,
+  TRIM6 = 0x62,
+
+  TOP_CFG5 = 0x62,
+  IRQ_EVENT_ACTUATOR_FAULT = 0x81,
+  IRQ_STATUS2 = 0x82,
+  IRQ_MASK2 = 0x83,
+  SNP_MEM_X = 0x84 // to 0xE7
+
 };
 
 enum BIT_POSITIONS {
 
   POS_ZERO = 0x00, 
-  POS_ONE = 0x01, 
-  POS_TWO = 0x02, 
-  POS_THREE = 0x03, 
-  POS_FOUR = 0x04, 
-  POS_FIVE = 0x05, 
-  POS_SIX = 0x06, 
-  POS_SEVEN = 0x07 
+  POS_ONE, 
+  POS_TWO, 
+  POS_THREE, 
+  POS_FOUR, 
+  POS_FIVE,
+  POS_SIX, 
+  POS_SEVEN
 
 };
 
-enum REG_MASKS {
-  I2C_WR_MASK = 0x7F 
+enum BIT_POS_MASKS {
+
+  LSB_POS_ZERO = 0xFE,
+  LSB_POS_ONE = 0xFD,
+  LSB_POS_TWO = 0xFB,
+  LSB_POS_THREE = 0xF7,
+  MSB_POS_FOUR = 0xEF,
+  MSB_POS_FIVE = 0xDF,
+  MSB_POS_SIX = 0xBF,
+  MSB_POS_SEVEN = 0x7F,
+  I2C_WR_MASK = 0x7F
+
+};
+
+enum BIT_VAL_MASKS {
+
+  BIT_VAL_ZERO = 0x00,
+  BIT_VAL_ONE,
+  BIT_VAL_TWO,
+  BIT_VAL_THREE,
+  BIT_VAL_FOUR,
+  BIT_VAL_FIVE,
+  BIT_VAL_SIX,
+  BIT_VAL_SEVEN,
+  BIT_VAL_EIGHT,
+  BIT_VAL_NINE,
+  BIT_VAL_TEN,
+  BIT_VAL_ELEVEN,
+  BIT_VAL_TWELVE,
+  BIT_VAL_THIRT,
+  BIT_VAL_FOUR,
+  BIT_VAL_FIFT
+
 };
 
 class Haptic_Driver
