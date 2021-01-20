@@ -8,10 +8,12 @@
 #define CHIP_REV 0xBA
 #define ENABLE 0x01
 #define DISABLE 0x00
+#define I2C_ONLY_MODE  0x01
+#define I2C_PWM_MODE 0x02
+#define GPIO_MODE 0x03
+#define LRA_TYPE 0x00
+#define ERM_TYPE 0x01
 
-enum ACTUATOR_TYPE {
-
-};
 
 enum REGISTERS {
 
@@ -107,14 +109,14 @@ enum BIT_POSITIONS {
 
 enum BIT_POS_MASKS {
 
-  LSB_POS_ZERO = 0xFE,
-  LSB_POS_ONE = 0xFD,
-  LSB_POS_TWO = 0xFB,
-  LSB_POS_THREE = 0xF7,
-  MSB_POS_FOUR = 0xEF,
-  MSB_POS_FIVE = 0xDF,
-  MSB_POS_SIX = 0xBF,
-  MSB_POS_SEVEN = 0x7F,
+  BIT_POS_ZERO = 0xFE,
+  BIT_POS_ONE = 0xFD,
+  BIT_POS_TWO = 0xFB,
+  BIT_POS_THREE = 0xF7,
+  BIT_POS_FOUR = 0xEF,
+  BIT_POS_FIVE = 0xDF,
+  BIT_POS_SIX = 0xBF,
+  BIT_POS_SEVEN = 0x7F,
   I2C_WR_MASK = 0x7F
 
 };
@@ -135,8 +137,11 @@ enum BIT_VAL_MASKS {
   BIT_VAL_ELEVEN,
   BIT_VAL_TWELVE,
   BIT_VAL_THIRT,
-  BIT_VAL_FOUR,
-  BIT_VAL_FIFT
+  BIT_VAL_FOURT,
+  BIT_VAL_FIFT,
+  BIT_VAL_7F = 0x7F,
+  BIT_VAL_FF = 0xFF,
+  BIT_VAL_MSB_F = 0xF00
 
 };
 
@@ -151,7 +156,23 @@ class Haptic_Driver
 
     bool begin(TwoWire &wirePort = Wire); // begin function
 
-    bool setActuator(uint8_t);
+    bool setActuatorType(uint8_t);
+    bool setOperationMode(uint8_t);
+    bool writeI2CWave(uint8_t);
+
+    bool setDefaultSettings(uint8_t soundMode = I2C_ONLY_MODE);
+    bool setActuatorABSVolt(float);
+    bool setActuatorNOMVolt(float);
+    bool setActuatorIMAX(float);
+    bool setActuatorImpedance(float);
+    bool setActuatorLRAfrequency(float);
+    bool enableCoinERM();
+    bool enableAcceleration(bool);
+    bool enableRapidStop(bool);
+    bool enableAmpPid(bool);
+    bool setBemfFaultLimit(bool);
+    bool enableV2iFactorFreeze(bool);
+    bool calibrateImpedanceDistance(bool);
 
   private:
     

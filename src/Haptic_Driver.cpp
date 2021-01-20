@@ -9,6 +9,7 @@
  */
 
 #include "Haptic_Driver.h"
+#include "math.h"
 
 Haptic_Driver::Haptic_Driver(uint8_t address){  _address = address; } //Constructor for I2C
 
@@ -31,12 +32,12 @@ bool Haptic_Driver::begin( TwoWire &wirePort )
 }
 
 
-bool Haptic_Driver::setActuator(uint8_t actuator){
+bool Haptic_Driver::setActuatorType(uint8_t actuator){
 
   if( actuator != 0 || actuator != 1 )
     return false; 
 
-  if( _writeRegister( TOP_CFG1, R_POS_FIVE, actuator, POS_FIVE ) )
+  if( _writeRegister( TOP_CFG1, BIT_POS_FIVE, actuator, POS_FIVE ) )
     return true; 
   else
     return false; 
@@ -44,10 +45,10 @@ bool Haptic_Driver::setActuator(uint8_t actuator){
 
 bool Haptic_Driver::setOperationMode(uint8_t mode){ 
 
-  if( mode < 0 || mode > 3)
+  if( mode < 1 || mode > 3) 
     return false;
 
-  if( _writeRegister(TOP_CTL1, mask, mode, POS_ZERO) ) 
+  if( _writeRegister(TOP_CTL1, BIT_VAL_SEVEN, mode, POS_ZERO) ) 
     return true; 
   else
     return false; 
@@ -57,7 +58,7 @@ bool Haptic_Driver::setOperationMode(uint8_t mode){
 bool Haptic_Driver::writeI2CWave(uint8_t wave){
 
   uint8_t accelState = _readRegister(TOP_CFG1);
-  accelState = accelState || R_POS_TWO; 
+  accelState = accelState || BIT_POS_TWO; 
   accelState = accelState >> POS_TWO;  
 
   if( accelState == ENABLE ){
@@ -76,14 +77,169 @@ bool Haptic_Driver::writeI2CWave(uint8_t wave){
   
 }
 
-bool Haptic_Driver::setDefaultSettings(){
-  setActuator( 
+bool Haptic_Driver::setDefaultSettings(uint8_t soundMode){
 
-  if( _writeRegister( , , , ) )
+  if( setActuatorType(LRA_TYPE) &&\ 
+      setActuatorABSVolt(2.5) &&\
+      setActuatorNOMVolt(2.5) &&\
+      setActuatorIMAX(170) &&\
+      setActuatorImpedance(13.8) &&\
+      setActuatorLRAfrequency(170) &&\
+      setOperationMode(I2C_ONLY_MODE) &&\
+      enableCoinERM() ) // End of normal setup
     return true;
   else
     return false; 
   
+}
+
+bool Haptic_Driver::setActuatorABSVolt(float absVolt){
+
+  if( absVolt < 0 || absVolt > 3.3)
+    return false; 
+  
+  absVolt = absVolt/(23.4 * pow(10,-3)); 
+
+  if( _writeRegister(ACTUATOR2, BIT_VAL_ZERO, static_cast<uint8_t>(absVolt), POS_ZERO) )
+    return true;
+  else
+    return false; 
+  
+}
+
+bool Haptic_Driver::setActuatorNOMVolt(float rmsVolt){
+
+  if( rmsVolt < 0 || rmsVolt > 3.3 )
+    return false; 
+
+  rmsVolt = rmsVolt/(23.4 * pow(10,-3)); 
+    
+  if( _writeRegister(ACTUATOR1 , BIT_VAL_ZERO, static_cast<uint8_t>(rmsVolt), POS_ZERO ) )
+    return true;
+  else
+    return false; 
+  
+}
+
+bool Haptic_Driver::setActuatorIMAX(float maxCurr){
+
+  if( maxCurr < 0 || maxCurr > 300.0) // Random upper limit - FIX 
+    return false; 
+  
+  maxCurr = (maxCurr - 28.6)/7.2;
+
+  if( _writeRegister(ACTUATOR3, BIT_VAL_ZERO, static_cast<uint8_t>(maxCurr), POS_ZERO) )
+    return true;
+  else
+    return false; 
+  
+}
+
+bool Haptic_Driver::setActuatorImpedance(float motorImpedance){
+
+  if( motorImpedance< 0 || motorImpedance> 500.0) // Random upper limit - FIX
+    return false; 
+
+  uint8_t msbImpedance; 
+  uint8_t lsbImpedance;
+  uint16_t v2iFactor;
+  uint8_t maxCurr = _readRegister(ACTUATOR3) | BIT_VAL_FIFT;
+
+  v2iFactor = (motorImpedance * (maxCurr + 4))/1.6104;
+  msbImpedance = (v2iFactor - (v2iFactor & BIT_VAL_FF))/256;
+  lsbImpedance = (v2iFactor - (256 * (v2iFactor & BIT_VAL_MSB_F)));
+
+  if( _writeRegister(CALIB_V2I_L, BIT_VAL_ZERO, lsbImpedance, POS_ZERO) &&\
+      _writeRegister(CALIB_V2I_H, BIT_VAL_ZERO, msbImpedance, POS_ZERO) )
+    return true;
+  else
+    return false; 
+  
+}
+
+bool Haptic_Driver::setActuatorLRAfrequency(float frequency){
+
+  if( frequency < 0 || frequency > 500 )
+    return false; 
+  
+  uint8_t msbFrequency;
+  uint8_t lsbFrequency;
+  uint16_t lraPeriod;
+
+  lraPeriod = 1/(frequency * (1333.32 * pow(10, -9)));
+  msbFrequency = (lraPeriod - (lraPeriod & BIT_VAL_7F))/128;
+  lsbFrequency = (lraPeriod - 128 * (lraPeriod & BIT_VAL_MSB_F));
+
+  if( _writeRegister(FRQ_LRA_PER_H, BIT_VAL_ZERO, msbFrequency, POS_ZERO) &&\ 
+      _writeRegister(FRQ_LRA_PER_L, BIT_VAL_ZERO, lsbFrequency, POS_ZERO) )
+    return true;
+  else
+    return false; 
+  
+}
+
+bool Haptic_Driver::enableCoinERM(){
+
+  if( enableAcceleration(false) &&\
+      enableRapidStop(false) &&\ 
+      enableAmpPid(false) &&\ 
+      enableV2iFactorFreeze(true) &&\
+      calibrateImpedanceDistance(true) &&\
+      setBemfFaultLimit(true) ) 
+    return true;
+  else
+    return false; 
+  
+}
+
+bool Haptic_Driver::enableAcceleration(bool enable){
+
+  if( _writeRegister(TOP_CFG1, BIT_POS_TWO, static_cast<uint8_t>(enable), POS_TWO) )
+    return true;
+  else
+    return false; 
+}
+
+
+bool Haptic_Driver::enableRapidStop(bool enable){
+
+  if( _writeRegister(TOP_CFG1, BIT_POS_ONE, static_cast<uint8_t>(enable), POS_ONE) )
+    return true;
+  else
+    return false; 
+}
+
+bool Haptic_Driver::enableAmpPid(bool enable){
+
+  if( _writeRegister(TOP_CFG1, BIT_POS_ZERO, static_cast<uint8_t>(enable), POS_ZERO) )
+    return true;
+  else
+    return false; 
+}
+
+bool Haptic_Driver::setBemfFaultLimit(bool enable){
+
+  if( _writeRegister(TOP_CFG1, BIT_POS_FOUR, static_cast<uint8_t>(enable), POS_FOUR) )
+    return true;
+  else
+    return false; 
+}
+
+bool Haptic_Driver::enableV2iFactorFreeze(bool enable){
+
+  if( _writeRegister(TOP_CFG4, BIT_POS_SEVEN, static_cast<uint8_t>(enable), POS_SEVEN) )
+    return true;
+  else
+    return false; 
+}
+
+
+bool Haptic_Driver::calibrateImpedanceDistance(bool enable){
+
+  if( _writeRegister(TOP_CFG4, BIT_POS_SIX, static_cast<uint8_t>(enable), POS_SIX) )
+    return true;
+  else
+    return false; 
 }
 
 // This generic function handles I2C write commands for modifying individual

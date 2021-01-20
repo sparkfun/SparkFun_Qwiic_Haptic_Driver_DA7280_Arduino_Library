@@ -1,7 +1,7 @@
 #include <Wire.h>
 #include "Haptic_Driver.h"
 
-Haptic_Driver hapDriv;
+Haptic_Driver hapDrive;
 
 void setup(){
 
@@ -9,10 +9,11 @@ void setup(){
   Serial.begin(115200);
 
   while(!Serial);
-  if( !hapDriv.begin())
+  if( !hapDrive.begin())
     Serial.print("Could not communicate with Haptic Driver.");
 
   pinMode(LED_BUILTIN, OUTPUT);
+  hapDrive.setDefaultSettings();
 }
 
 void loop(){
