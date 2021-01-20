@@ -173,7 +173,9 @@ class Haptic_Driver
     bool setBemfFaultLimit(bool);
     bool enableV2iFactorFreeze(bool);
     bool calibrateImpedanceDistance(bool);
+    bool setVibrateVal(uint8_t);
 
+    uint8_t _readRegister(uint8_t);
   private:
     
     // Private Variables
@@ -205,7 +207,6 @@ class Haptic_Driver
 
     // This generic function reads an eight bit register. It takes the register's
     // address as its' parameter. 
-    uint8_t _readRegister(uint8_t);
 
     bool _readConsReg(uint8_t regs[], size_t);
     bool _readNonConsReg(uint8_t regs[], size_t);

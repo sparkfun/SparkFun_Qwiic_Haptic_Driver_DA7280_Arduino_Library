@@ -13,14 +13,23 @@ void setup(){
     Serial.print("Could not communicate with Haptic Driver.");
 
   pinMode(LED_BUILTIN, OUTPUT);
-  hapDrive.setDefaultSettings();
+  if( !hapDrive.setDefaultSettings() ) 
+    Serial.println("Could not set default settings.");
+  hapDrive.enableAcceleration(true);
+  hapDrive.writeI2CWave(10);
+  if( !hapDrive.setOperationMode(1))
+    Serial.println("Could not begin motor.");
+
 }
 
 void loop(){
 
+  Serial.println("Write wave.");
+  hapDrive.writeI2CWave(10);
   digitalWrite(LED_BUILTIN, HIGH);
-  delay(500);
+  delay(1000);
   digitalWrite(LED_BUILTIN, LOW);
-  delay(200);
+  hapDrive.writeI2CWave(25);
+  delay(1000);
 
 }

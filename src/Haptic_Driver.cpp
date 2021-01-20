@@ -22,7 +22,6 @@ bool Haptic_Driver::begin( TwoWire &wirePort )
   uint8_t ret = _readRegister(CHIP_REV_REG); 
   chipRev |= ret << 8;
   chipRev |= ret; 
-  Serial.println(chipRev, HEX);
 
   if( chipRev != CHIP_REV )
     return false;
@@ -31,10 +30,9 @@ bool Haptic_Driver::begin( TwoWire &wirePort )
 
 }
 
-
 bool Haptic_Driver::setActuatorType(uint8_t actuator){
-
-  if( actuator != 0 || actuator != 1 )
+  
+  if( actuator < 0 || actuator > 1 )
     return false; 
 
   if( _writeRegister( TOP_CFG1, BIT_POS_FIVE, actuator, POS_FIVE ) )
@@ -45,7 +43,7 @@ bool Haptic_Driver::setActuatorType(uint8_t actuator){
 
 bool Haptic_Driver::setOperationMode(uint8_t mode){ 
 
-  if( mode < 1 || mode > 3) 
+  if( mode < 0 || mode > 3) 
     return false;
 
   if( _writeRegister(TOP_CTL1, BIT_VAL_SEVEN, mode, POS_ZERO) ) 
@@ -58,8 +56,14 @@ bool Haptic_Driver::setOperationMode(uint8_t mode){
 bool Haptic_Driver::writeI2CWave(uint8_t wave){
 
   uint8_t accelState = _readRegister(TOP_CFG1);
-  accelState = accelState || BIT_POS_TWO; 
+  accelState &= BIT_VAL_FOUR; 
   accelState = accelState >> POS_TWO;  
+  Serial.println("IRQ_EVENT1:");
+  Serial.println(_readRegister(IRQ_EVENT1), BIN);
+  Serial.println("IRQ_EVENT_WARN_DIAG:");
+  Serial.println(_readRegister(IRQ_EVENT_WARN_DIAG), BIN);
+  Serial.println("IRQ_STATUS1:");
+  Serial.println(_readRegister(IRQ_STATUS1), BIN);
 
   if( accelState == ENABLE ){
     if( wave < 0x00 || wave > 0x7F ) 
@@ -84,9 +88,7 @@ bool Haptic_Driver::setDefaultSettings(uint8_t soundMode){
       setActuatorNOMVolt(2.5) &&\
       setActuatorIMAX(170) &&\
       setActuatorImpedance(13.8) &&\
-      setActuatorLRAfrequency(170) &&\
-      setOperationMode(I2C_ONLY_MODE) &&\
-      enableCoinERM() ) // End of normal setup
+      setActuatorLRAfrequency(170) )
     return true;
   else
     return false; 
@@ -137,7 +139,7 @@ bool Haptic_Driver::setActuatorIMAX(float maxCurr){
 
 bool Haptic_Driver::setActuatorImpedance(float motorImpedance){
 
-  if( motorImpedance< 0 || motorImpedance> 500.0) // Random upper limit - FIX
+  if( motorImpedance < 0 || motorImpedance > 500.0) // Random upper limit - FIX
     return false; 
 
   uint8_t msbImpedance; 
@@ -159,7 +161,8 @@ bool Haptic_Driver::setActuatorImpedance(float motorImpedance){
 
 bool Haptic_Driver::setActuatorLRAfrequency(float frequency){
 
-  if( frequency < 0 || frequency > 500 )
+
+  if( frequency < 0 || frequency > 500.0 )
     return false; 
   
   uint8_t msbFrequency;
@@ -171,8 +174,9 @@ bool Haptic_Driver::setActuatorLRAfrequency(float frequency){
   lsbFrequency = (lraPeriod - 128 * (lraPeriod & BIT_VAL_MSB_F));
 
   if( _writeRegister(FRQ_LRA_PER_H, BIT_VAL_ZERO, msbFrequency, POS_ZERO) &&\ 
-      _writeRegister(FRQ_LRA_PER_L, BIT_VAL_ZERO, lsbFrequency, POS_ZERO) )
+      _writeRegister(FRQ_LRA_PER_L, BIT_VAL_ZERO, lsbFrequency, POS_ZERO) ){
     return true;
+  }
   else
     return false; 
   
@@ -242,6 +246,18 @@ bool Haptic_Driver::calibrateImpedanceDistance(bool enable){
     return false; 
 }
 
+bool Haptic_Driver::setVibrateVal(uint8_t val){
+  if( val < 0 || val > 255 )
+    return false; 
+
+  if( _writeRegister(TOP_CTL2, BIT_VAL_ZERO, val, POS_ZERO) )
+    return true;
+  else
+    return false; 
+  
+}
+
+
 // This generic function handles I2C write commands for modifying individual
 // bits in an eight bit register. Paramaters include the register's address, a mask 
 // for bits that are ignored, the bits to write, and the bits' starting
@@ -257,7 +273,7 @@ bool Haptic_Driver::_writeRegister(uint8_t _wReg, uint8_t _mask, uint8_t _bits, 
   _i2cPort->write(_wReg); // at register....
   _i2cPort->write(_i2cWrite); // Write register...
 
-  if( _i2cPort->endTransmission() ) // End communcation.
+  if( !_i2cPort->endTransmission() ) // End communcation.
     return true; 
   else 
     return false; 
