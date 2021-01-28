@@ -257,8 +257,38 @@ bool Haptic_Driver::setVibrateVal(uint8_t val){
   
 }
 
-bool Haptic_Driver::waveFormSettings(uint8_t val){
+bool Haptic_Driver::createSequence(uint8_t numSnippets, uint8_t numSequences){
+   
+}
+
+bool Haptic_Driver::addSnippet(uint8_t ramp, uint8_t amplitude, uint8_t timeBase){
   
+  if( (_readRegister(MEM_CTL2) >> 7) == LOCKED )
+    _writeRegister(MEM_CTL2, BIT_POS_SEVEN, UNLOCKED, POS_SEVEN);
+ 
+  if( ramp < 0 | ramp > 1) 
+    return false;
+
+  if( amplitude < 0 | amplitude > 15 )
+    return false; 
+
+  if( timeBase < 0 | timeBase > 7) 
+    return false; 
+
+  uint8_t registerVal = (ramp << POS_SEVEN) | (amplitude << POS_FOUR) | (timeBase << POS_ZERO);  
+  uint8_t snipAddrLoc = _readRegister(MEM_CTL1); 
+
+  Serial.println(snipAddrLoc); //debug
+  return true; 
+
+  _writeRegister(snipAddrLoc, BIT_VAL_ZERO, registerVal, POS_ZERO); 
+
+
+}
+
+bool Haptic_Driver::addSnippet(uint8_t snippets[], uint8_t numOfSnippets){
+ 
+
 }
 
 uint8_t Haptic_Driver::checkIrqEvent(){
