@@ -257,6 +257,49 @@ bool Haptic_Driver::setVibrateVal(uint8_t val){
   
 }
 
+bool Haptic_Driver::waveFormSettings(uint8_t val){
+  
+}
+
+uint8_t Haptic_Driver::checkIrqEvent(){
+
+  uint8_t irqEvent = _readRegister(IRQ_EVENT1); 
+  uint8_t totalBits = 7; 
+  uint8_t i; 
+
+  if(irqEvent & 0x01)
+    return E_SEQ_CONTINUE;
+
+  for (i = 0; i < totalBits; i++){
+    irqEvent >>= 1; 
+    irqEvent & 0x01;
+    if (irqEvent)
+      irqEvent <<= i; 
+      break;
+  }
+
+  switch(if irqEvent){
+
+    case E_UVLO:
+        return E_UVLO;
+    case E_SEQ_DONE:
+        return E_SEQ_DONE;
+    case E_OVERTEMP_CRIT:
+        return E_OVERTEMP_CRIT;
+    case E_SEQ_FAULT:
+        return E_SEQ_FAULT;
+    case E_WARNING:
+        return E_WARNING;
+    case E_ACTUATOR_FAULT:
+        return E_ACTUATOR_FAULT;
+    case E_OC_VAULT:
+        return E_OC_VAULT;
+
+  }
+  
+}
+
+
 
 // This generic function handles I2C write commands for modifying individual
 // bits in an eight bit register. Paramaters include the register's address, a mask 

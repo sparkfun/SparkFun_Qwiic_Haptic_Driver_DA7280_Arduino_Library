@@ -29,7 +29,7 @@ void loop(){
   digitalWrite(LED_BUILTIN, HIGH);
   delay(1000);
   digitalWrite(LED_BUILTIN, LOW);
-  hapDrive.writeI2CWave(25);
+  hapDrive.writeI2CWave(5);
   delay(1000);
 
 }
