@@ -257,14 +257,11 @@ bool Haptic_Driver::setVibrateVal(uint8_t val){
   
 }
 
-bool Haptic_Driver::createSequence(uint8_t numSnippets, uint8_t numSequences){
-   
+bool Haptic_Driver::createHeader(uint8_t numSnippets, uint8_t numSequences){
 }
 
 bool Haptic_Driver::addSnippet(uint8_t ramp, uint8_t amplitude, uint8_t timeBase){
   
-  if( (_readRegister(MEM_CTL2) >> 7) == LOCKED )
-    _writeRegister(MEM_CTL2, BIT_POS_SEVEN, UNLOCKED, POS_SEVEN);
  
   if( ramp < 0 | ramp > 1) 
     return false;
@@ -275,15 +272,26 @@ bool Haptic_Driver::addSnippet(uint8_t ramp, uint8_t amplitude, uint8_t timeBase
   if( timeBase < 0 | timeBase > 7) 
     return false; 
 
+  setOperationMode(INACTIVE);  
+
+  if( (_readRegister(MEM_CTL2) >> 7) == LOCKED )
+    _writeRegister(MEM_CTL2, BIT_POS_SEVEN, UNLOCKED, POS_SEVEN);
+  
+  
   uint8_t registerVal = (ramp << POS_SEVEN) | (amplitude << POS_FOUR) | (timeBase << POS_ZERO);  
   uint8_t snipAddrLoc = _readRegister(MEM_CTL1); 
 
   Serial.println(snipAddrLoc); //debug
   return true; 
 
-  _writeRegister(snipAddrLoc, BIT_VAL_ZERO, registerVal, POS_ZERO); 
-
-
+  numOfSnippets = numOfSnippets + 1;
+  if( _writeRegister(SNP_MEM_X, numOfSnippets, BIT_VAL_ZERO, POS_ZERO) &&\   
+      _writeRegister(SNP_MEM_X + 1, 0x00, BIT_VAL_ZERO, POS_ZERO) &&\  
+      _writeRegister(snipAddrLoc, BIT_VAL_ZERO, registerVal, POS_ZERO) ) 
+    return true;
+  else 
+    return false; 
+  
 }
 
 bool Haptic_Driver::addSnippet(uint8_t snippets[], uint8_t numOfSnippets){

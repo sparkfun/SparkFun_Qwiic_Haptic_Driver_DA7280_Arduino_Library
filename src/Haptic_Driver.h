@@ -171,6 +171,7 @@ class Haptic_Driver
   public:
     
     // Public Variables
+    uint8_t numOfSnippets = 0; 
     
     //Function declarations
     Haptic_Driver(uint8_t address = DEF_ADDR); // I2C Constructor
