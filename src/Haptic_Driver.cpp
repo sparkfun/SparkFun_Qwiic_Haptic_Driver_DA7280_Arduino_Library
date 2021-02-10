@@ -58,12 +58,6 @@ bool Haptic_Driver::writeI2CWave(uint8_t wave){
   uint8_t accelState = _readRegister(TOP_CFG1);
   accelState &= BIT_VAL_FOUR; 
   accelState = accelState >> POS_TWO;  
-  Serial.println("IRQ_EVENT1:");
-  Serial.println(_readRegister(IRQ_EVENT1), BIN);
-  Serial.println("IRQ_EVENT_WARN_DIAG:");
-  Serial.println(_readRegister(IRQ_EVENT_WARN_DIAG), BIN);
-  Serial.println("IRQ_STATUS1:");
-  Serial.println(_readRegister(IRQ_STATUS1), BIN);
 
   if( accelState == ENABLE ){
     if( wave < 0x00 || wave > 0x7F ) 
@@ -83,11 +77,11 @@ bool Haptic_Driver::writeI2CWave(uint8_t wave){
 
 bool Haptic_Driver::setDefaultSettings(uint8_t soundMode){
 
-  if( setActuatorType(LRA_TYPE) &&\ 
-      setActuatorABSVolt(2.5) &&\
-      setActuatorNOMVolt(2.5) &&\
-      setActuatorIMAX(170) &&\
-      setActuatorImpedance(13.8) &&\
+  if( setActuatorType(LRA_TYPE) && 
+      setActuatorABSVolt(2.5) &&
+      setActuatorNOMVolt(2.5) &&
+      setActuatorIMAX(170) &&
+      setActuatorImpedance(13.8) &&
       setActuatorLRAfrequency(170) )
     return true;
   else
@@ -173,7 +167,7 @@ bool Haptic_Driver::setActuatorLRAfrequency(float frequency){
   msbFrequency = (lraPeriod - (lraPeriod & BIT_VAL_7F))/128;
   lsbFrequency = (lraPeriod - 128 * (lraPeriod & BIT_VAL_MSB_F));
 
-  if( _writeRegister(FRQ_LRA_PER_H, BIT_VAL_ZERO, msbFrequency, POS_ZERO) &&\ 
+  if( _writeRegister(FRQ_LRA_PER_H, BIT_VAL_ZERO, msbFrequency, POS_ZERO) && 
       _writeRegister(FRQ_LRA_PER_L, BIT_VAL_ZERO, lsbFrequency, POS_ZERO) ){
     return true;
   }
@@ -184,11 +178,11 @@ bool Haptic_Driver::setActuatorLRAfrequency(float frequency){
 
 bool Haptic_Driver::enableCoinERM(){
 
-  if( enableAcceleration(false) &&\
-      enableRapidStop(false) &&\ 
-      enableAmpPid(false) &&\ 
-      enableV2iFactorFreeze(true) &&\
-      calibrateImpedanceDistance(true) &&\
+  if( enableAcceleration(false) &&
+      enableRapidStop(false) &&
+      enableAmpPid(false) && 
+      enableV2iFactorFreeze(true) &&
+      calibrateImpedanceDistance(true) &&
       setBemfFaultLimit(true) ) 
     return true;
   else
@@ -257,11 +251,10 @@ bool Haptic_Driver::setVibrateVal(uint8_t val){
   
 }
 
-bool Haptic_Driver::createHeader(uint8_t numSnippets, uint8_t numSequences){
+void Haptic_Driver::createHeader(uint8_t numSnippets, uint8_t numSequences){
 }
 
 bool Haptic_Driver::addSnippet(uint8_t ramp, uint8_t amplitude, uint8_t timeBase){
-  
  
   if( ramp < 0 | ramp > 1) 
     return false;
@@ -278,26 +271,70 @@ bool Haptic_Driver::addSnippet(uint8_t ramp, uint8_t amplitude, uint8_t timeBase
     _writeRegister(MEM_CTL2, BIT_POS_SEVEN, UNLOCKED, POS_SEVEN);
   
   
-  uint8_t registerVal = (ramp << POS_SEVEN) | (amplitude << POS_FOUR) | (timeBase << POS_ZERO);  
+  uint8_t pwlVal = (ramp << POS_SEVEN) | (amplitude << POS_FOUR) | (timeBase << POS_ZERO);  
   uint8_t snipAddrLoc = _readRegister(MEM_CTL1); 
 
-  Serial.println(snipAddrLoc); //debug
-  return true; 
+ // Serial.println("Current header (expecting 0x84): "); 
+ // Serial.print("0x"); 
+ // Serial.println(snipAddrLoc, HEX); //debug
 
-  numOfSnippets = numOfSnippets + 1;
-  if( _writeRegister(SNP_MEM_X, numOfSnippets, BIT_VAL_ZERO, POS_ZERO) &&\   
-      _writeRegister(SNP_MEM_X + 1, 0x00, BIT_VAL_ZERO, POS_ZERO) &&\  
-      _writeRegister(snipAddrLoc, BIT_VAL_ZERO, registerVal, POS_ZERO) ) 
-    return true;
-  else 
-    return false; 
+  snpMemCopy[NUM_SNIPPETS] = snpMemCopy[NUM_SNIPPETS] + 1; // Number of Snippets
+  snpMemCopy[NUM_SEQUENCES] = snpMemCopy[NUM_SEQUENCES] + 1; // Number of sequences
+
+  uint8_t frameByte = addFrame(0, 0, 1);
+
+  for(uint8_t i = 0; i < snpMemCopy[NUM_SNIPPETS]; i++){
+    snpMemCopy[SNP_ENDPOINTERS + i] = SNP_ENDPOINTERS_REGS + i;  //snippet endpointer
+  }
+
+  for(uint8_t i = 0; i < snpMemCopy[NUM_SEQUENCES]; i++){
+    snpMemCopy[SEQ_ENDPOINTERS + i] = SEQ_ENDPOINTERS_REGS + i; //sequence endpointer 
+    lastPosWritten = snpMemCopy[SEQ_ENDPOINTERS + i] + 1;  
+  }
+  
+  snpMemCopy[lastPosWritten] = pwlVal; // Write snippet
+  lastPosWritten = lastPosWritten + 1; 
+  snpMemCopy[lastPosWritten] = frameByte; 
+  
+  for(uint8_t i = 0; i < TOTAL_MEM_REGISTERS; i ++){
+    Serial.print(snpMemCopy[i], HEX); 
+    Serial.print(" "); 
+  }
+  Serial.println(""); 
+
+  seqControl(1);
+  return true; 
   
 }
 
 bool Haptic_Driver::addSnippet(uint8_t snippets[], uint8_t numOfSnippets){
- 
+  return true; 
+}
+
+uint8_t Haptic_Driver::addFrame(uint8_t gain, uint8_t timeBase, uint8_t snipIdLow) {
+
+  uint8_t commandByteZero = 0;  //Command byte zero is mandatory, snip-id begins at one
+  commandByteZero = (gain << POS_FIVE) | (timeBase << POS_THREE) | (snipIdLow << POS_ZERO); 
+  Serial.print("Command Byte: ");
+  Serial.println(commandByteZero, BIN);
+  return commandByteZero; 
 
 }
+
+void Haptic_Driver::playFromMemory(bool enable){
+
+  _writeRegister(TOP_CTL2, BIT_POS_FOUR, enable, POS_FOUR); 
+  
+}
+
+void Haptic_Driver::eraseWaveformMemory(uint8_t mode){
+  
+  for( uint8_t i; i = NUM_SNIPPETS_REG; i < END_OF_MEM ){
+    _writeRegister(NUM_SNIPPETS_REG + i, BIT_VAL_ZERO, 0x00, POS_ZERO); 
+  } 
+  
+}
+
 
 uint8_t Haptic_Driver::checkIrqEvent(){
 
@@ -305,19 +342,19 @@ uint8_t Haptic_Driver::checkIrqEvent(){
   uint8_t totalBits = 7; 
   uint8_t i; 
 
-  if(irqEvent & 0x01)
+  if( irqEvent & 0x01 )
     return E_SEQ_CONTINUE;
 
   for (i = 0; i < totalBits; i++){
     irqEvent >>= 1; 
     irqEvent & 0x01;
-    if (irqEvent)
+    if( irqEvent ) {
       irqEvent <<= i; 
       break;
+    }
   }
 
-  switch(if irqEvent){
-
+  switch( irqEvent ){
     case E_UVLO:
         return E_UVLO;
     case E_SEQ_DONE:
@@ -332,8 +369,25 @@ uint8_t Haptic_Driver::checkIrqEvent(){
         return E_ACTUATOR_FAULT;
     case E_OC_VAULT:
         return E_OC_VAULT;
-
   }
+
+}
+
+bool Haptic_Driver::seqControl(uint8_t sequenceID){
+  if( sequenceID < 0 | sequenceID > 15 )
+    return false; 
+
+  if( _writeRegister(SEQ_CTL2, BIT_VAL_F0, sequenceID, POS_ZERO) )
+    return true;
+  else
+    return false; 
+  
+}
+
+bool Haptic_Driver::checkMemFault(){
+
+  uint8_t memFault = _readRegister(IRQ_EVENT_SEQ_DIAG); 
+  return memFault; 
   
 }
 
@@ -403,7 +457,7 @@ bool Haptic_Driver::_readNonConsReg(uint8_t reg[], size_t numReads){
 // given register. 
 // This particular write does not care what is currently in the register and
 // overwrites whatever is there.
-uint8_t Haptic_Driver::_writeConsReg(uint8_t regs[], size_t numWrites){
+bool Haptic_Driver::_writeConsReg(uint8_t regs[], size_t numWrites){
 
   _writeRegister(CIF_I2C1, I2C_WR_MASK, 0, 0x07);      
 
@@ -425,7 +479,7 @@ uint8_t Haptic_Driver::_writeConsReg(uint8_t regs[], size_t numWrites){
 // given register but able to jump locations by giving another address. 
 // This particular write does not care what is currently in the register and
 // overwrites whatever is there.
-uint8_t Haptic_Driver::_writeNonConsReg(uint8_t regs[], size_t numWrites){
+bool Haptic_Driver::_writeNonConsReg(uint8_t regs[], size_t numWrites){
 
   _writeRegister(CIF_I2C1, I2C_WR_MASK, 1, 0x07);      
 
@@ -442,6 +496,22 @@ uint8_t Haptic_Driver::_writeNonConsReg(uint8_t regs[], size_t numWrites){
     return false;
 
 }
+
+bool Haptic_Driver::_writeWaveFormMemory(uint8_t waveFormArray[] ){
+
+  _i2cPort->beginTransmission(_address); // Start communication.
+  _i2cPort->write(NUM_SNIPPETS_REG); // Moves pointer to register.
+  for( size_t i = BEGIN_SNP_MEM; i < TOTAL_MEM_REGISTERS; i++){
+    _i2cPort->write(waveFormArray[i]);
+  }
+
+  if(!_i2cPort->endTransmission())
+    return true;
+  else
+    return false;
+  
+}
+
 
 
 

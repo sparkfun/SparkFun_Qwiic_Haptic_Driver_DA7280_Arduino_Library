@@ -12,6 +12,8 @@
 #define LOCKED 0x00
 #define LRA_TYPE 0x00
 #define ERM_TYPE 0x01
+#define RAMP 0x01
+#define STEP 0x00
 
 enum OPERATION_MODES {
 
@@ -21,6 +23,26 @@ enum OPERATION_MODES {
    RTWM_MODE, 
    ETWM_MODE
 
+};
+
+enum SNPMEM_ARRAY_POS {
+
+  BEGIN_SNP_MEM = 0x00,
+  NUM_SNIPPETS = 0x00,
+  NUM_SEQUENCES = 0x01,
+  SNP_ENDPOINTERS = 0x02,  
+  SEQ_ENDPOINTERS = 0x10, //SNP_ENDPOINTERS + 14 = 0x10
+  TOTAL_MEM_REGISTERS = 0x64,
+
+};
+
+enum SNPMEM_REGS {
+
+  NUM_SNIPPETS_REG = 0x84,
+  NUM_SEQUENCES_REG = 0x85,
+  SNP_ENDPOINTERS_REGS = 0x86, // Up to 15 endpointers can be addressed
+  SEQ_ENDPOINTERS_REGS = 0x94, //SNP_ENDPOINTERS_REGS + 14 = 0x65
+  END_OF_MEM = 0xB7 // 0x84 + 99 = 0xB7
 };
 
 enum REGISTERS {
@@ -147,6 +169,7 @@ enum BIT_VAL_MASKS {
   BIT_VAL_THIRT,
   BIT_VAL_FOURT,
   BIT_VAL_FIFT,
+  BIT_VAL_F0 = 0xF0,
   BIT_VAL_7F = 0x7F,
   BIT_VAL_FF = 0xFF,
   BIT_VAL_MSB_F = 0xF00
@@ -155,7 +178,7 @@ enum BIT_VAL_MASKS {
 
 enum IRQ_EVENTS {
 
-  E_SEQ_CONTINUE = 0x01
+  E_SEQ_CONTINUE = 0x01,
   E_UVLO = 0x02,
   E_SEQ_DONE = 0x04,
   E_OVERTEMP_CRIT = 0x08,
@@ -171,7 +194,8 @@ class Haptic_Driver
   public:
     
     // Public Variables
-    uint8_t numOfSnippets = 0; 
+    uint8_t snpMemCopy[100] {}; 
+    uint8_t lastPosWritten = 0; 
     
     //Function declarations
     Haptic_Driver(uint8_t address = DEF_ADDR); // I2C Constructor
@@ -197,6 +221,17 @@ class Haptic_Driver
     bool calibrateImpedanceDistance(bool);
     bool setVibrateVal(uint8_t);
     bool waveFormSettings(uint8_t);
+    void createHeader(uint8_t, uint8_t);
+    bool addSnippet(uint8_t ramp = RAMP, uint8_t amplitude = 2, uint8_t timeBase = 2);
+    bool addSnippet(uint8_t snippets[], uint8_t);
+    void eraseWaveformMemory(uint8_t);
+    uint8_t checkIrqEvent();
+    void playFromMemory(bool enable = true);
+    bool seqControl(uint8_t);
+    bool checkMemFault();
+    uint8_t addFrame(uint8_t, uint8_t, uint8_t);
+
+
 
   private:
     
@@ -214,18 +249,20 @@ class Haptic_Driver
     // given register. 
     // This particular write does not care what is currently in the register and
     // overwrites whatever is there.
-    uint8_t _writeConsReg(uint8_t regs[], size_t);
+    bool _writeConsReg(uint8_t regs[], size_t);
 
     // Non-Consecutive Write Mode: I2C_WR_MODE = 1
     // Allows for n-number of writes on non-consecutive registers, beginning at the
     // given register but able to jump locations by giving another address. 
     // This particular write does not care what is currently in the register and
     // overwrites whatever is there.
-    uint8_t _writeNonConsReg(uint8_t regs[], size_t);
+    bool _writeNonConsReg(uint8_t regs[], size_t);
 
     // This generic function does a basic I-squared-C write transaction at the
     // given address, and writes the given _command argument. 
     void _writeCommand(uint8_t);
+
+    bool _writeWaveFormMemory(uint8_t waveFormArray[]);
 
     // This generic function reads an eight bit register. It takes the register's
     // address as its' parameter. 

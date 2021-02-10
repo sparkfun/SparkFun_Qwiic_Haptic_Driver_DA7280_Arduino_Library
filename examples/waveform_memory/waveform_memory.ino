@@ -10,26 +10,35 @@ void setup(){
 
   while(!Serial);
   if( !hapDrive.begin())
-    Serial.print("Could not communicate with Haptic Driver.");
+    Serial.println("Could not communicate with Haptic Driver.");
+  else
+    Serial.println("Get ready!");
 
   pinMode(LED_BUILTIN, OUTPUT);
   if( !hapDrive.setDefaultSettings() ) 
     Serial.println("Could not set default settings.");
-  hapDrive.enableAcceleration(true);
-  hapDrive.writeI2CWave(10);
-  if( !hapDrive.setOperationMode(DRO_MODE))
-    Serial.println("Could not begin motor.");
 
 }
 
 void loop(){
 
-  Serial.println("Write wave.");
-  hapDrive.writeI2CWave(10);
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(1000);
-  digitalWrite(LED_BUILTIN, LOW);
-  hapDrive.writeI2CWave(5);
-  delay(1000);
+  if( Serial.available() > 0){       
+    if( Serial.readStringUntil('\n') == "w" ){
+      if( hapDrive.addSnippet(STEP, 4, 4) )
+        Serial.println("Written."); 
+      else
+        Serial.println("Errored."); 
+    }
+
+    if( Serial.readStringUntil('\n') == "p" ){
+      hapDrive.setOperationMode(RTWM_MODE);
+      hapDrive.playFromMemory();
+      Serial.println(hapDrive.checkMemFault());
+      Serial.println(hapDrive.checkIrqEvent());
+      Serial.println("Playing.....");
+    }
+  }
+
+  delay(500);
 
 }
