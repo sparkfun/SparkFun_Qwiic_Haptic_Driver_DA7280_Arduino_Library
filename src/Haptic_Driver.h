@@ -15,6 +15,24 @@
 #define RAMP 0x01
 #define STEP 0x00
 
+struct hapticSettings {
+
+  uint8_t motorType; 
+  float nomVolt;
+  float absVolt; 
+  float currMax;
+  float impedance; 
+  float lraFreq;  
+
+};
+
+typedef enum {
+  HAPTIC_SUCCESS,
+  HAPTIC_HW_ERROR,
+  HAPTIC_INCORR_PARAM,
+  HAPTIC_UNKNOWN_ERROR
+} status_t;
+
 enum OPERATION_MODES {
 
    INACTIVE  = 0x00, 
@@ -30,8 +48,9 @@ enum SNPMEM_ARRAY_POS {
   BEGIN_SNP_MEM = 0x00,
   NUM_SNIPPETS = 0x00,
   NUM_SEQUENCES = 0x01,
+  ENDPOINTERS = 0x02,
   SNP_ENDPOINTERS = 0x02,  
-  SEQ_ENDPOINTERS = 0x10, //SNP_ENDPOINTERS + 14 = 0x10
+  //SEQ_ENDPOINTERS = 0x11, //SNP_ENDPOINTERS + 14 = 0x10
   TOTAL_MEM_REGISTERS = 0x64,
 
 };
@@ -40,9 +59,9 @@ enum SNPMEM_REGS {
 
   NUM_SNIPPETS_REG = 0x84,
   NUM_SEQUENCES_REG = 0x85,
-  SNP_ENDPOINTERS_REGS = 0x86, // Up to 15 endpointers can be addressed
-  SEQ_ENDPOINTERS_REGS = 0x94, //SNP_ENDPOINTERS_REGS + 14 = 0x65
-  END_OF_MEM = 0xB7 // 0x84 + 99 = 0xB7
+  SNP_ENDPOINTERS_REGS = 0x88, // Up to 15 endpointers can be addressed
+  //SEQ_ENDPOINTERS_REGS = 0x89,
+  END_OF_MEM = 0xE7 // 0x84 + 99 = 0xE7
 };
 
 enum REGISTERS {
@@ -203,10 +222,12 @@ class Haptic_Driver
     bool begin(TwoWire &wirePort = Wire); // begin function
 
     bool setActuatorType(uint8_t);
-    bool setOperationMode(uint8_t);
+    bool setOperationMode(uint8_t mode = DRO_MODE ); 
     bool writeI2CWave(uint8_t);
 
-    bool setDefaultSettings(uint8_t soundMode = DRO_MODE);
+    bool defaultMotorSettings(hapticSettings sparkSettings = defaultSettings);
+    bool setMotor(hapticSettings userSettings);
+    hapticSettings readSettings();
     bool setActuatorABSVolt(float);
     bool setActuatorNOMVolt(float);
     bool setActuatorIMAX(float);
@@ -222,14 +243,18 @@ class Haptic_Driver
     bool setVibrateVal(uint8_t);
     bool waveFormSettings(uint8_t);
     void createHeader(uint8_t, uint8_t);
+    void checkDone();
+    void clearIrq();
     bool addSnippet(uint8_t ramp = RAMP, uint8_t amplitude = 2, uint8_t timeBase = 2);
     bool addSnippet(uint8_t snippets[], uint8_t);
     void eraseWaveformMemory(uint8_t);
-    uint8_t checkIrqEvent();
-    void playFromMemory(bool enable = true);
-    bool seqControl(uint8_t);
+    uint8_t checkIrqEvent(bool clearEvents = false);
+    bool playFromMemory(bool enable = true);
+    bool seqControl(uint8_t, uint8_t);
     bool checkMemFault();
     uint8_t addFrame(uint8_t, uint8_t, uint8_t);
+
+    hapticSettings defaultSettings;
 
 
 
