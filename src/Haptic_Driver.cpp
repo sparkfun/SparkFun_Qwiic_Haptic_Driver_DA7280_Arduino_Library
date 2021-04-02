@@ -70,14 +70,14 @@ bool Haptic_Driver::writeI2CWave(uint8_t wave){
       return false;
   }
 
-  if( _writeRegister(TOP_CTL2, BIT_VAL_ZERO, wave, POS_ZERO) )
+  if( _writeRegister(TOP_CTL2, 0x00, wave, 0) )
     return true;
   else
     return false; 
   
 }
 
-bool Haptic_Driver::defaultMotorSettings(hapticSettings sparkSettings){
+bool Haptic_Driver::defaultMotorSettings(){
 
 
   sparkSettings.motorType = LRA_TYPE;
@@ -101,10 +101,12 @@ bool Haptic_Driver::defaultMotorSettings(hapticSettings sparkSettings){
 hapticSettings Haptic_Driver::getSettings(){
   
   hapticSettings temp; 
+  uint16_t v2i_factor;
   temp.nomVolt =  _readRegister(ACTUATOR1) * (23.4 * pow(10, -3)); 
   temp.absVolt =  _readRegister(ACTUATOR2) * (23.4 * pow(10, -3)); 
   temp.currMax =  (_readRegister(ACTUATOR3) * 7.2) + 28.6;
-  temp.impedance = (val * 1.6104) / (_readRegister(ACTUATOR3) + 4);
+  v2i_factor = (_readRegister(CALIB_V2I_H) << 8) | _readRegister(CALIB_IMP_L);
+  temp.impedance = (v2i_factor * 1.6104) / (_readRegister(ACTUATOR3) + 4);
   return temp; 
 
 }
@@ -258,7 +260,7 @@ bool Haptic_Driver::setBemfFaultLimit(bool enable){
 
 bool Haptic_Driver::enableV2iFactorFreeze(bool enable){
 
-  if( _writeRegister(TOP_CFG4, 0x7F, enable, POS_SEVEN) )
+  if( _writeRegister(TOP_CFG4, 0x7F, enable, 7) )
     return true;
   else
     return false; 
@@ -305,7 +307,7 @@ void Haptic_Driver::checkDone(){
   Serial.println(_readRegister(IRQ_EVENT_WARN_DIAG), BIN);
   Serial.print("IRQ_STATUS1: ");
   Serial.println(_readRegister(IRQ_STATUS1), BIN);
-  //return ((val & BIT_VAL_TWO) >> POS_ONE); 
+  //return ((val & 0x02) >> 1); 
   
 }
 
@@ -554,7 +556,7 @@ bool Haptic_Driver::_readNonConsReg(uint8_t reg[], size_t numReads){
 // overwrites whatever is there.
 bool Haptic_Driver::_writeConsReg(uint8_t regs[], size_t numWrites){
 
-  _writeRegister(CIF_I2C1, I2C_WR_MASK, 0, 0x07);      
+  _writeRegister(CIF_I2C1, 0x7F, 0, 7);      
 
   _i2cPort->beginTransmission(_address);
 
@@ -576,7 +578,7 @@ bool Haptic_Driver::_writeConsReg(uint8_t regs[], size_t numWrites){
 // overwrites whatever is there.
 bool Haptic_Driver::_writeNonConsReg(uint8_t regs[], size_t numWrites){
 
-  _writeRegister(CIF_I2C1, I2C_WR_MASK, 1, 0x07);      
+  _writeRegister(CIF_I2C1, 0x7F, 1, 7);      
 
   _i2cPort->beginTransmission(_address); // Start communication.
   for( size_t i = 0; i <= numWrites; i++){

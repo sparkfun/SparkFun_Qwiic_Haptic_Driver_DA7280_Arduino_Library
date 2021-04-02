@@ -173,7 +173,7 @@ class Haptic_Driver
     bool setOperationMode(uint8_t mode = DRO_MODE ); 
     bool writeI2CWave(uint8_t);
 
-    bool defaultMotorSettings(hapticSettings sparkSettings = defaultSettings);
+    bool defaultMotorSettings();
     bool setMotor(hapticSettings userSettings);
     hapticSettings getSettings();
     bool setActuatorABSVolt(float);
@@ -202,7 +202,7 @@ class Haptic_Driver
     bool checkMemFault();
     uint8_t addFrame(uint8_t, uint8_t, uint8_t);
 
-    hapticSettings defaultSettings;
+    hapticSettings sparkSettings;
 
 
 
