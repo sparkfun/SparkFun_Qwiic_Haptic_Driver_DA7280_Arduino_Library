@@ -165,6 +165,7 @@ class Haptic_Driver
     bool setActuatorNOMVolt(float);
     bool setActuatorIMAX(float);
     bool setActuatorImpedance(float);
+    uint16_t readImpAdjus();
     bool setActuatorLRAfrequency(float);
     bool enableCoinERM();
     bool enableAcceleration(bool);

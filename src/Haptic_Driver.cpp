@@ -256,6 +256,21 @@ bool Haptic_Driver::setActuatorLRAfrequency(float frequency){
   
 }
 
+// Address: 0x11 and 0x12, bits[7:0]: default value is 0x00 for both (22 Ohms)
+// This function returns the adjusted impedance of the motor, calculated by the
+// IC on playback. This is meant to adjust for the motor's variation in
+// impedance given manufacturing tolerances. Value is in Ohms. 
+uint16_t Haptic_Driver::readImpAdjus(){
+
+   uint16_t impMSB =  _readRegister(CALIB_IMP_H);
+   uint16_t impLSB =  _readRegister(CALIB_IMP_L);
+
+   uint16_t totImp = (4 * 62.5 * pow(10, -3) * impMSB) + (62.5 * pow(10, -3) * impLSB);
+   return totImp; 
+}
+
+// This function sets the various settings that allow for ERM vibration motor 
+// operation by calling the relevant individual functions. 
 bool Haptic_Driver::enableCoinERM(){
 
   if( enableAcceleration(false) &&
@@ -270,6 +285,8 @@ bool Haptic_Driver::enableCoinERM(){
   
 }
 
+// Address: 0x13, bit[2]: default value is 0x1 
+// Enables or disables active acceleration.
 bool Haptic_Driver::enableAcceleration(bool enable){
 
   if( _writeRegister(TOP_CFG1, 0xFB, enable, 2) )
@@ -279,6 +296,8 @@ bool Haptic_Driver::enableAcceleration(bool enable){
 }
 
 
+// Address: 0x13, bit[1]: default value is 0x1 
+// Enables or disables the "rapid stop" technology.
 bool Haptic_Driver::enableRapidStop(bool enable){
 
   if( _writeRegister(TOP_CFG1, 0xFD, enable, 1) )
@@ -287,6 +306,8 @@ bool Haptic_Driver::enableRapidStop(bool enable){
     return false; 
 }
 
+// Address: 0x13, bit[0]: default value is 0x0 
+// Enables or disables the "amplitude PID" technology.
 bool Haptic_Driver::enableAmpPid(bool enable){
 
   if( _writeRegister(TOP_CFG1, 0x00, enable, 0x0) )
@@ -295,6 +316,9 @@ bool Haptic_Driver::enableAmpPid(bool enable){
     return false; 
 }
 
+// Address: 0x13, bit[0]: default value is 0x1 
+// Enables or disables internal loop computations, which should only be
+// disabled when using custom waveform or wideband operation.
 bool Haptic_Driver::setBemfFaultLimit(bool enable){
 
   if( _writeRegister(TOP_CFG1, 0xEF, enable, 4) )
@@ -303,6 +327,9 @@ bool Haptic_Driver::setBemfFaultLimit(bool enable){
     return false; 
 }
 
+// Address: 0x16, bit[7]: default value is 0x0 
+// Enables or disables internal loop computations, which should only be
+// disabled when using custom waveform or wideband operation.
 bool Haptic_Driver::enableV2iFactorFreeze(bool enable){
 
   if( _writeRegister(TOP_CFG4, 0x7F, enable, 7) )
