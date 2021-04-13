@@ -156,7 +156,6 @@ class Haptic_Driver
 
     bool setActuatorType(uint8_t);
     bool setOperationMode(uint8_t mode = DRO_MODE ); 
-    bool writeI2CWave(uint8_t);
 
     bool defaultMotorSettings();
     bool setMotor(hapticSettings userSettings);

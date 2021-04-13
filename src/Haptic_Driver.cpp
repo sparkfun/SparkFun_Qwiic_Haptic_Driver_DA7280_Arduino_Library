@@ -62,35 +62,6 @@ bool Haptic_Driver::setOperationMode(uint8_t mode){
 
 }
 
-// Address: 0x23, bit[7:0]
-// Applies the argument "wave" to the register that controls the strength of
-// the vibration. The function first checks if acceleration mode is enabled
-// which inhibits the maximum value that can be written to the register.
-bool Haptic_Driver::writeI2CWave(uint8_t wave){
-
-  if ( wave < 0 )
-    return false; 
-
-  uint8_t accelState = _readRegister(TOP_CFG1);
-  accelState &= 0x04; 
-  accelState = accelState >> 2;  
-
-  if( accelState == ENABLE ){
-    if( wave >  0x7F ) 
-      wave == 0x7F; // Just limit the argument to the physical limit
-  }
-  else {
-    if( wave > 0xFF ) 
-      wave = 0xFF;// Just limit the argument to the physical limit
-  }
-
-  if( _writeRegister(TOP_CTL2, 0x00, wave, 0) )
-    return true;
-  else
-    return false; 
-  
-}
-
 // This function calls a number of other functions to set the following
 // electrical characteristics of the motor that comes with the SparkFun Haptic
 // Motor Driver. This can be set individually by the user, using the individual
@@ -338,7 +309,8 @@ bool Haptic_Driver::enableV2iFactorFreeze(bool enable){
     return false; 
 }
 
-
+// Address: 0x16 , bit[6]: default value is: 0x1 (disabled)
+// Enables or disables automatic updates to impedance value. 
 bool Haptic_Driver::calibrateImpedanceDistance(bool enable){
 
   if( _writeRegister(TOP_CFG4, 0xBF, enable, 6) )
@@ -347,10 +319,27 @@ bool Haptic_Driver::calibrateImpedanceDistance(bool enable){
     return false; 
 }
 
+// Address: 0x23, bit[7:0]
+// Applies the argument "wave" to the register that controls the strength of
+// the vibration. The function first checks if acceleration mode is enabled
+// which limits the maximum value that can be written to the register.
 bool Haptic_Driver::setVibrateVal(uint8_t val){
 
-  if( val < 0 || val > 255 )
+  if ( val < 0 )
     return false; 
+
+  uint8_t accelState = _readRegister(TOP_CFG1);
+  accelState &= 0x04; 
+  accelState = accelState >> 2;  
+
+  if( accelState == ENABLE ){
+    if( val >  0x7F ) 
+      val == 0x7F; // Just limit the argument to the physical limit
+  }
+  else {
+    if( val > 0xFF ) 
+      val = 0xFF;// Just limit the argument to the physical limit
+  }
 
   if( _writeRegister(TOP_CTL2, 0x00, val, 0) )
     return true;
