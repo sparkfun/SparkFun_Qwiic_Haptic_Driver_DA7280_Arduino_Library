@@ -2,8 +2,11 @@
 #include "Haptic_Driver.h"
 
 Haptic_Driver hapDrive;
+int event;
 
 void setup(){
+
+  pinMode(PWM0, OUTPUT);
 
   Wire.begin();
   Serial.begin(115200);
@@ -16,12 +19,24 @@ void setup(){
   if( !hapDrive.defaultMotorSettings() ) 
     Serial.println("Could not set default settings.");
 
-  hapDrive.enableAcceleration(true);
-  hapDrive.setOperationMode(DRO_MODE);
+  analogWrite(PWM0, 5);
+
+  hapDrive.setOperationMode(PWM_MODE);
+  
 
 }
 
 void loop(){
 
-  delay(150);
+
+  analogWrite(PWM0, 30);
+  event = hapDrive.checkIrqEvent();
+
+  if( event ){
+    Serial.println(event);
+    hapDrive.clearIrq(event);
+    Serial.println(hapDrive.checkIrqEvent());
+  }
+  
+  delay(100);
 }

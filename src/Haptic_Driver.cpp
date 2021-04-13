@@ -13,6 +13,8 @@
 
 Haptic_Driver::Haptic_Driver(uint8_t address){  _address = address; } //Constructor for I2C
 
+// Address: 0x00 , bit[7:0]: default value is 0xBA. 
+// Checks the WHOAMI value in the CHIP_REV register.
 bool Haptic_Driver::begin( TwoWire &wirePort )
 {
   
@@ -30,9 +32,12 @@ bool Haptic_Driver::begin( TwoWire &wirePort )
 
 }
 
+// Address: 0x13 , bit[5]: default value is 0x00. 
+// This sets the "actuator" (motor) type, which is either an LRA_MOTOR
+// or is an ERM_MOTOR. 
 bool Haptic_Driver::setActuatorType(uint8_t actuator){
   
-  if( actuator < 0 || actuator > 1 )
+  if( actuator != LRA_TYPE && actuator != ERM_TYPE )
     return false; 
 
    if( _writeRegister(TOP_CFG1, 0xDF, actuator, 5) )
@@ -42,7 +47,9 @@ bool Haptic_Driver::setActuatorType(uint8_t actuator){
 }
 
 // Address: 0x22, bits[3:0]
-// Sets the operation mode of the 
+// Sets how the user will be operating the motor, which is one of four modes:
+// PWM_MODE, DRO_MODE (I2C contorl), RTWM_MODE (Register-Triggered-Waveform-Memory 
+// Mode), or ETWM_MODE (Edge-Triggered-Waveform-Memory Mode).
 bool Haptic_Driver::setOperationMode(uint8_t mode){ 
 
   if( mode < 0 || mode > 3) 
@@ -55,19 +62,26 @@ bool Haptic_Driver::setOperationMode(uint8_t mode){
 
 }
 
+// Address: 0x23, bit[7:0]
+// Applies the argument "wave" to the register that controls the strength of
+// the vibration. The function first checks if acceleration mode is enabled
+// which inhibits the maximum value that can be written to the register.
 bool Haptic_Driver::writeI2CWave(uint8_t wave){
+
+  if ( wave < 0 )
+    return false; 
 
   uint8_t accelState = _readRegister(TOP_CFG1);
   accelState &= 0x04; 
   accelState = accelState >> 2;  
 
   if( accelState == ENABLE ){
-    if( wave < 0x00 || wave > 0x7F ) 
-      return false;
+    if( wave >  0x7F ) 
+      wave == 0x7F; // Just limit the argument to the physical limit
   }
   else {
-    if( wave < 0x00 || wave > 0xFF ) 
-      return false;
+    if( wave > 0xFF ) 
+      wave = 0xFF;// Just limit the argument to the physical limit
   }
 
   if( _writeRegister(TOP_CTL2, 0x00, wave, 0) )
@@ -77,12 +91,16 @@ bool Haptic_Driver::writeI2CWave(uint8_t wave){
   
 }
 
+// This function calls a number of other functions to set the following
+// electrical characteristics of the motor that comes with the SparkFun Haptic
+// Motor Driver. This can be set individually by the user, using the individual
+// function calls - see datasheet on the motor being used. 
 bool Haptic_Driver::defaultMotorSettings(){
 
 
   sparkSettings.motorType = LRA_TYPE;
   sparkSettings.nomVolt = 2.5; //volts
-  sparkSettings.absVolt = 2.5; // voltas
+  sparkSettings.absVolt = 2.5; // volts
   sparkSettings.currMax = 170; // milliamps
   sparkSettings.impedance = 13.8; // ohms
   sparkSettings.lraFreq = 170; // hertz
@@ -98,6 +116,7 @@ bool Haptic_Driver::defaultMotorSettings(){
     return false; 
 }
 
+// This function returns a struct of the motor's settings set by the user.
 hapticSettings Haptic_Driver::getSettings(){
   
   hapticSettings temp; 
@@ -112,6 +131,9 @@ hapticSettings Haptic_Driver::getSettings(){
 }
  
 
+
+// This function takes a hapticSettings type and calls the respective function
+// to set the various motor characteristics. 
 bool Haptic_Driver::setMotor(hapticSettings userSettings){
 
   if( setActuatorType(userSettings.motorType) && 
@@ -125,9 +147,12 @@ bool Haptic_Driver::setMotor(hapticSettings userSettings){
     return false; 
 }
 
+// Address: 0x0D , bit[7:0]: default value is: 0x78 (2.808 Volts)
+// Function takes the absolute maximum voltage of the motor intended to
+// be paired with the motor driver IC. Argument is of float type, and in volts.
 bool Haptic_Driver::setActuatorABSVolt(float absVolt){
 
-  if( absVolt < 0 || absVolt > 3.3)
+  if( absVolt < 0 || absVolt > 6.0)
     return false; 
   
   absVolt = absVolt/(23.4 * pow(10,-3)); 
@@ -139,6 +164,10 @@ bool Haptic_Driver::setActuatorABSVolt(float absVolt){
   
 }
 
+
+// Address: 0x0C , bit[7:0]: default value is: 0x5A (2.106 Volts)
+// Function takes the nominal voltage range of the motor intended to
+// be paired with the motor driver IC. Argument is of float type, and in volts.
 bool Haptic_Driver::setActuatorNOMVolt(float rmsVolt){
 
   if( rmsVolt < 0 || rmsVolt > 3.3 )
@@ -153,6 +182,10 @@ bool Haptic_Driver::setActuatorNOMVolt(float rmsVolt){
   
 }
 
+// Address: 0x0E , bit[4:0]: default value is: 0x17 (198mA)
+// Function takes the max current rating of the motor intended to
+// be paired with the motor driver IC. Argument is of float type, and in
+// milliamps.
 bool Haptic_Driver::setActuatorIMAX(float maxCurr){
 
   if( maxCurr < 0 || maxCurr > 300.0) // Random upper limit - FIX 
@@ -167,6 +200,12 @@ bool Haptic_Driver::setActuatorIMAX(float maxCurr){
   
 }
 
+// Address: 0x0F and 0x10 , bits[7:0]: default value is: 0x01 and 0x0D
+// respectively.
+// Function takes the impedance of the motor intended to
+// be paired with the motor driver IC.The value is dependent on the max current
+// set in 0x0E (ACTUATOR3) so be sure to set that first. Argument is of float type, and in
+// ohms. 
 bool Haptic_Driver::setActuatorImpedance(float motorImpedance){
 
   if( motorImpedance < 0 || motorImpedance > 500.0) // Random upper limit - FIX
@@ -189,6 +228,12 @@ bool Haptic_Driver::setActuatorImpedance(float motorImpedance){
   
 }
 
+// Address: 0x0F and 0x10 , bits[7:0]: default value is: 0x01 and 0x0D
+// respectively.
+// Function takes the impedance of the motor intended to
+// be paired with the motor driver IC.The value is dependent on the max current
+// set in 0x0E (ACTUATOR3) so be sure to set that first. Argument is of float type, and in
+// ohms. 
 bool Haptic_Driver::setActuatorLRAfrequency(float frequency){
 
   if( frequency < 0 || frequency > 500.0 )
@@ -290,8 +335,8 @@ bool Haptic_Driver::setVibrateVal(uint8_t val){
 void Haptic_Driver::createHeader(uint8_t numSnippets, uint8_t numSequences){
 }
 
-void Haptic_Driver::clearIrq(){
-  _writeRegister(IRQ_EVENT1, 0xFB, 0x01, 2);
+void Haptic_Driver::clearIrq(uint8_t irq){
+  _writeRegister(IRQ_EVENT1, ~irq, irq, 0);
 }
 
 void Haptic_Driver::checkDone(){
@@ -443,7 +488,7 @@ uint8_t Haptic_Driver::checkIrqEvent(bool clearEvents){
   }
 
   if( clearEvents )
-    _writeRegister(IRQ_EVENT1, 0x00, 0xFF, 0); 
+    _writeRegister(IRQ_EVENT1, ~(irqEvent), irqEvent, 0); 
 
   switch( irqEvent ){
     case E_UVLO:

@@ -27,11 +27,26 @@ struct hapticSettings {
 };
 
 typedef enum {
+
   HAPTIC_SUCCESS,
+  E_SEQ_CONTINUE = 0x01,
+  E_UVLO = 0x02,
   HAPTIC_HW_ERROR,
+  E_SEQ_DONE = 0x04,
   HAPTIC_INCORR_PARAM,
-  HAPTIC_UNKNOWN_ERROR
+  HAPTIC_UNKNOWN_ERROR,
+  E_OVERTEMP_CRIT = 0x08,
+  E_SEQ_FAULT = 0x10,
+  E_WARNING = 0x20,
+  E_ACTUATOR_FAULT = 0x40,
+  E_OC_VAULT = 0x80
+
 } status_t;
+
+enum IRQ_EVENTS {
+
+
+};
 
 enum OPERATION_MODES {
 
@@ -67,74 +82,56 @@ enum SNPMEM_REGS {
 enum REGISTERS {
 
   CHIP_REV_REG = 0x00, //whoami?
-  
   IRQ_EVENT1 = 0x03, 
   IRQ_EVENT_WARN_DIAG, 
   IRQ_EVENT_SEQ_DIAG, 
   IRQ_STATUS1, 
   IRQ_MASK1, 
-
   CIF_I2C1, 
-
   FRQ_LRA_PER_H = 0x0A, 
   FRQ_LRA_PER_L, 
-
   ACTUATOR1, 
   ACTUATOR2, 
   ACTUATOR3, 
-
   CALIB_V2I_H, 
   CALIB_V2I_L = 0x10, 
-
   CALIB_IMP_H, 
   CALIB_IMP_L, 
-
   TOP_CFG1,
   TOP_CFG2,
   TOP_CFG3,
   TOP_CFG4,
-
   TOP_INT_CFG1,
   TOP_INT_CFG6_H = 0x1C,
   TOP_INT_CFG6_L,
   TOP_INT_CFG7_H,
   TOP_INT_CFG7_L,
   TOP_INT_CFG8 = 0x20,
-
   TOP_CTL1 = 0x22,
   TOP_CTL2,
   SEG_CTL1,
-
   SWG_C1,
   SWG_C2,
   SWG_C3,
   SEQ_CTL2,
-
   GPI_0_CTL,
   GPI_1_CTL,
   GPI_2_CTL,
-
   MEM_CTL1,
   MEM_CTL2,
-  
   ADC_DATA_H1,
   ADC_DATA_L1,
-
   POLARITY = 0x43,
   LRA_AVR_H,
   LRA_AVR_L,
-
   FRQ_LRA_PER_ACT_H,
   FRQ_LRA_PER_ACT_L,
-
   FRQ_PHASE_H,
   FRQ_PHASE_L,
   FRQ_CTL = 0x4C,
-
   TRIM3 = 0x5F,
   TRIM4,
   TRIM6 = 0x62,
-
   TOP_CFG5 = 0x6E,
   IRQ_EVENT_ACTUATOR_FAULT = 0x81,
   IRQ_STATUS2,
@@ -143,18 +140,6 @@ enum REGISTERS {
 
 };
 
-enum IRQ_EVENTS {
-
-  E_SEQ_CONTINUE = 0x01,
-  E_UVLO = 0x02,
-  E_SEQ_DONE = 0x04,
-  E_OVERTEMP_CRIT = 0x08,
-  E_SEQ_FAULT = 0x10,
-  E_WARNING = 0x20,
-  E_ACTUATOR_FAULT = 0x40,
-  E_OC_VAULT = 0x80
-
-};
 
 class Haptic_Driver
 {  
@@ -192,7 +177,7 @@ class Haptic_Driver
     bool waveFormSettings(uint8_t);
     void createHeader(uint8_t, uint8_t);
     void checkDone();
-    void clearIrq();
+    void clearIrq(uint8_t);
     bool addSnippet(uint8_t ramp = RAMP, uint8_t amplitude = 2, uint8_t timeBase = 2);
     bool addSnippet(uint8_t snippets[], uint8_t);
     void eraseWaveformMemory(uint8_t);
