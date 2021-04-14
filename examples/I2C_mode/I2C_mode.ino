@@ -2,7 +2,6 @@
 #include "Haptic_Driver.h"
 
 Haptic_Driver hapDrive;
-const uint8_t CAPTOUCH = 2;
 
 void setup(){
 
@@ -14,30 +13,20 @@ void setup(){
   else
     Serial.println("Press button to activate.");
 
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(100);
-  digitalWrite(LED_BUILTIN, LOW);
-  pinMode(LED_BUILTIN, OUTPUT);
-  pinMode(CAPTOUCH, INPUT);
-
-  if( !hapDrive.setDefaultSettings() ) 
+  if( !hapDrive.defaultMotor() ) 
     Serial.println("Could not set default settings.");
 
-  hapDrive.enableAcceleration(true);
+  Serial.println("Setting I2C Operation.");
   hapDrive.setOperationMode(DRO_MODE);
+  Serial.println("Ready.");
 
 }
 
 void loop(){
 
-  if( digitalRead(CAPTOUCH) == HIGH ){
+  hapDrive.setVibrate(25);
+  delay(500); 
+  hapDrive.setVibrate(0); 
+  delay(500);
 
-    hapDrive.writeI2CWave(25);
-    delay(250); 
-    hapDrive.writeI2CWave(0); 
-    delay(100);
-
-  }
-  
-  delay(150);
 }

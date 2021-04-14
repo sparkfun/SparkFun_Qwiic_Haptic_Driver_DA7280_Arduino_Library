@@ -39,9 +39,17 @@ typedef enum {
   E_SEQ_FAULT = 0x10,
   E_WARNING = 0x20,
   E_ACTUATOR_FAULT = 0x40,
-  E_OC_VAULT = 0x80
+  E_OC_FAULT = 0x80
 
 } status_t;
+
+typedef enum {
+
+  E_PWM_FAULT = 0x20,
+  E_MEM_FAULT = 0x40,
+  E_SEQ_ID_FAULT = 0x80
+
+} diag_status_t;
 
 enum IRQ_EVENTS {
 
@@ -156,8 +164,9 @@ class Haptic_Driver
 
     bool setActuatorType(uint8_t);
     bool setOperationMode(uint8_t mode = DRO_MODE ); 
+    uint8_t getOperationMode(); 
 
-    bool defaultMotorSettings();
+    bool defaultMotor();
     bool setMotor(hapticSettings userSettings);
     hapticSettings getSettings();
     bool setActuatorABSVolt(float);
@@ -173,17 +182,18 @@ class Haptic_Driver
     bool setBemfFaultLimit(bool);
     bool enableV2iFactorFreeze(bool);
     bool calibrateImpedanceDistance(bool);
-    bool setVibrateVal(uint8_t);
-    bool waveFormSettings(uint8_t);
+    bool setVibrate(uint8_t);
+    uint8_t getVibrate();
     void createHeader(uint8_t, uint8_t);
     void checkDone();
     void clearIrq(uint8_t);
     bool addSnippet(uint8_t ramp = RAMP, uint8_t amplitude = 2, uint8_t timeBase = 2);
     bool addSnippet(uint8_t snippets[], uint8_t);
     void eraseWaveformMemory(uint8_t);
-    uint8_t checkIrqEvent(bool clearEvents = false);
+    status_t getIrqEvent();
+    diag_status_t getEventDiag();
     bool playFromMemory(bool enable = true);
-    bool seqControl(uint8_t, uint8_t);
+    bool setSeqControl(uint8_t, uint8_t);
     bool checkMemFault();
     uint8_t addFrame(uint8_t, uint8_t, uint8_t);
 

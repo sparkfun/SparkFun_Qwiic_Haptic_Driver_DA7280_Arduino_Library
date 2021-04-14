@@ -46,7 +46,7 @@ bool Haptic_Driver::setActuatorType(uint8_t actuator){
     return false; 
 }
 
-// Address: 0x22, bits[3:0]
+// Address: 0x22, bits[2:0]
 // Sets how the user will be operating the motor, which is one of four modes:
 // PWM_MODE, DRO_MODE (I2C contorl), RTWM_MODE (Register-Triggered-Waveform-Memory 
 // Mode), or ETWM_MODE (Edge-Triggered-Waveform-Memory Mode).
@@ -60,13 +60,26 @@ bool Haptic_Driver::setOperationMode(uint8_t mode){
   else
     return false; 
 
+  delay(1);
+
+}
+
+// Address: 0x22, bits[2:0]
+// Returns one of the four operation modes.
+// PWM_MODE, DRO_MODE (I2C contorl), RTWM_MODE (Register-Triggered-Waveform-Memory 
+// Mode), or ETWM_MODE (Edge-Triggered-Waveform-Memory Mode).
+uint8_t Haptic_Driver::getOperationMode(){ 
+
+  uint8_t mode = _readRegister(TOP_CTL1); 
+  return (mode & 0x07);
+
 }
 
 // This function calls a number of other functions to set the following
 // electrical characteristics of the motor that comes with the SparkFun Haptic
 // Motor Driver. This can be set individually by the user, using the individual
 // function calls - see datasheet on the motor being used. 
-bool Haptic_Driver::defaultMotorSettings(){
+bool Haptic_Driver::defaultMotor(){
 
 
   sparkSettings.motorType = LRA_TYPE;
@@ -233,11 +246,11 @@ bool Haptic_Driver::setActuatorLRAfrequency(float frequency){
 // impedance given manufacturing tolerances. Value is in Ohms. 
 uint16_t Haptic_Driver::readImpAdjus(){
 
-   uint16_t impMSB =  _readRegister(CALIB_IMP_H);
-   uint16_t impLSB =  _readRegister(CALIB_IMP_L);
+   uint8_t tempMSB =  _readRegister(CALIB_IMP_H);
+   uint8_t tempLSB =  _readRegister(CALIB_IMP_L);
 
-   uint16_t totImp = (4 * 62.5 * pow(10, -3) * impMSB) + (62.5 * pow(10, -3) * impLSB);
-   return totImp; 
+   uint16_t totalImp = (4 * 62.5 * pow(10, -3) * tempMSB) + (62.5 * pow(10, -3) * tempLSB);
+   return totalImp; 
 }
 
 // This function sets the various settings that allow for ERM vibration motor 
@@ -323,7 +336,7 @@ bool Haptic_Driver::calibrateImpedanceDistance(bool enable){
 // Applies the argument "wave" to the register that controls the strength of
 // the vibration. The function first checks if acceleration mode is enabled
 // which limits the maximum value that can be written to the register.
-bool Haptic_Driver::setVibrateVal(uint8_t val){
+bool Haptic_Driver::setVibrate(uint8_t val){
 
   if ( val < 0 )
     return false; 
@@ -345,6 +358,17 @@ bool Haptic_Driver::setVibrateVal(uint8_t val){
     return true;
   else
     return false; 
+  
+}
+
+// Address: 0x23, bit[7:0]
+// Reads the vibration value. This will have a result when the user writes to
+// this register and also when a PWM_MODE is enabled and a duty cycle is
+// applied to the GPI0/PWM pin. 
+uint8_t Haptic_Driver::getVibrate(){
+
+  uint8_t vibVal = _readRegister(TOP_CTL2);
+  return vibVal;
   
 }
 
@@ -426,7 +450,7 @@ bool Haptic_Driver::addSnippet(uint8_t ramp, uint8_t timeBase, uint8_t amplitude
   }
   Serial.println(""); 
 
-  seqControl(1, 0);
+  setSeqControl(1, 0);
   Serial.print("Sequence Control: "); 
   Serial.println(_readRegister(SEQ_CTL2), HEX); 
 
@@ -465,7 +489,6 @@ uint8_t Haptic_Driver::addFrame(uint8_t gain, uint8_t timeBase, uint8_t snipIdLo
 bool Haptic_Driver::playFromMemory(bool enable){
 
  if( _writeRegister(TOP_CTL1, 0xEF, enable, 4) ){
-  Serial.print("TOP_CTL1 Byte: ");
    Serial.println(_readRegister(TOP_CTL1), BIN);
    return true;
  }
@@ -485,28 +508,13 @@ void Haptic_Driver::eraseWaveformMemory(uint8_t mode){
 }
 
 
-uint8_t Haptic_Driver::checkIrqEvent(bool clearEvents){
+status_t Haptic_Driver::getIrqEvent(){
 
   uint8_t irqEvent = _readRegister(IRQ_EVENT1); 
-  uint8_t totalBits = 7; 
-  uint8_t i; 
-
-  if( irqEvent & 0x01 )
-    return E_SEQ_CONTINUE;
-
-  for (i = 0; i < totalBits; i++){
-    irqEvent >>= 1; 
-    irqEvent & 0x01;
-    if( irqEvent ) {
-      irqEvent <<= i; 
-      break;
-    }
-  }
-
-  if( clearEvents )
-    _writeRegister(IRQ_EVENT1, ~(irqEvent), irqEvent, 0); 
 
   switch( irqEvent ){
+    case E_SEQ_CONTINUE:
+        return E_SEQ_CONTINUE;
     case E_UVLO:
         return E_UVLO;
     case E_SEQ_DONE:
@@ -519,13 +527,30 @@ uint8_t Haptic_Driver::checkIrqEvent(bool clearEvents){
         return E_WARNING;
     case E_ACTUATOR_FAULT:
         return E_ACTUATOR_FAULT;
-    case E_OC_VAULT:
-        return E_OC_VAULT;
+    case E_OC_FAULT:
+        return E_OC_FAULT;
   }
 
 }
 
-bool Haptic_Driver::seqControl(uint8_t repetitions, uint8_t sequenceID){
+diag_status_t Haptic_Driver::getEventDiag(){
+
+  uint8_t diag = _readRegister(IRQ_EVENT_SEQ_DIAG);
+
+  switch( diag ){
+    case E_PWM_FAULT:
+      return E_PWM_FAULT; 
+    case E_MEM_FAULT:
+      return E_MEM_FAULT; 
+    case E_SEQ_ID_FAULT:
+      return E_SEQ_ID_FAULT;
+  }
+
+}
+
+// Address:  , bit[]: default value is: 
+//
+bool Haptic_Driver::setSeqControl(uint8_t repetitions, uint8_t sequenceID){
 
 
   if( sequenceID < 0 | sequenceID > 15 )

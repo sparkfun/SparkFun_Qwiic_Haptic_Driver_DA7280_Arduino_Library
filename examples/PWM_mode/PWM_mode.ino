@@ -13,30 +13,29 @@ void setup(){
 
   if( !hapDrive.begin())
     Serial.println("Could not communicate with Haptic Driver.");
-  else
-    Serial.println("Press button to activate.");
 
-  if( !hapDrive.defaultMotorSettings() ) 
+  if( !hapDrive.defaultMotor() ) 
     Serial.println("Could not set default settings.");
+  else
+    Serial.println("Ready.");
 
-  analogWrite(PWM0, 5);
+  analogWrite(PWM0, 60);
 
   hapDrive.setOperationMode(PWM_MODE);
-  
 
 }
 
 void loop(){
 
+  event = hapDrive.getIrqEvent();
 
-  analogWrite(PWM0, 30);
-  event = hapDrive.checkIrqEvent();
-
-  if( event ){
-    Serial.println(event);
+  if( event == E_SEQ_FAULT ){
+    Serial.println("PWM Value is incorrect.");
     hapDrive.clearIrq(event);
-    Serial.println(hapDrive.checkIrqEvent());
   }
+
+  Serial.print("Vibration value from applied PWM signal: ");
+  Serial.println(hapDrive.getVibrate(), HEX);
   
-  delay(100);
+  delay(1000);
 }
