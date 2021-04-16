@@ -87,15 +87,15 @@ bool Haptic_Driver::defaultMotor(){
   sparkSettings.nomVolt = 2.5; //volts
   sparkSettings.absVolt = 2.5; // volts
   sparkSettings.currMax = 170; // milliamps
-  sparkSettings.impedance = 12.0; // ohms
-  sparkSettings.lraFreq = 170; // hertz
+  sparkSettings.impedance = 10.0; // ohms
+  sparkSettings.lraFreq = 200; // hertz
 
   if( setActuatorType(sparkSettings.motorType) && 
       setActuatorABSVolt(sparkSettings.absVolt) &&
       setActuatorNOMVolt(sparkSettings.nomVolt) &&
       setActuatorIMAX(sparkSettings.currMax) &&
       setActuatorImpedance(sparkSettings.impedance) &&
-      setActuatorLRAfrequency(sparkSettings.lraFreq) )
+      setActuatorLRAfreq(sparkSettings.lraFreq) )
     return true;
   else
     return false; 
@@ -126,7 +126,7 @@ bool Haptic_Driver::setMotor(hapticSettings userSettings){
       setActuatorNOMVolt(userSettings.nomVolt) &&
       setActuatorIMAX(userSettings.currMax) &&
       setActuatorImpedance(userSettings.impedance) &&
-      setActuatorLRAfrequency(userSettings.lraFreq) )
+      setActuatorLRAfreq(userSettings.lraFreq) )
     return true;
   else
     return false; 
@@ -149,6 +149,14 @@ bool Haptic_Driver::setActuatorABSVolt(float absVolt){
   
 }
 
+// Address: 0x0D , bit[7:0]: default value is: 0x78 (2.808 Volts)
+// Function returns the value in the register below.
+float Haptic_Driver::getActuatorABSVolt(){
+  
+  uint8_t regVal = _readRegister(ACTUATOR2);
+
+  return( regVal * (23.4 * pow(10, -3)) );
+}
 
 // Address: 0x0C , bit[7:0]: default value is: 0x5A (2.106 Volts)
 // Function takes the nominal voltage range of the motor intended to
@@ -167,6 +175,16 @@ bool Haptic_Driver::setActuatorNOMVolt(float rmsVolt){
   
 }
 
+// Address: 0x0C , bit[7:0]: default value is: 0x5A (2.106 Volts)
+// Function returns the value in the register below.
+float Haptic_Driver::getActuatorNOMVolt(){
+  
+  uint8_t regVal = _readRegister(ACTUATOR1);
+
+  return( regVal * (23.4 * pow(10, -3)) );
+
+}
+
 // Address: 0x0E , bit[4:0]: default value is: 0x17 (198mA)
 // Function takes the max current rating of the motor intended to
 // be paired with the motor driver IC. Argument is of float type, and in
@@ -183,6 +201,17 @@ bool Haptic_Driver::setActuatorIMAX(float maxCurr){
   else
     return false; 
   
+}
+
+// Address: 0x0E , bit[4:0]: default value is: 0x17 (198mA)
+// Function returns the value in the register below.
+uint16_t Haptic_Driver::getActuatorIMAX(){
+
+  uint8_t regVal = _readRegister(ACTUATOR3);
+  regVal &= 0x1F;
+
+  return (regVal * 7.2) + 28.6; 
+
 }
 
 // Address: 0x0F and 0x10 , bits[7:0]: default value is: 0x01 and 0x0D
@@ -214,12 +243,26 @@ bool Haptic_Driver::setActuatorImpedance(float motorImpedance){
 }
 
 // Address: 0x0F and 0x10 , bits[7:0]: default value is: 0x01 and 0x0D
+// Function returns the value in the register below.
+uint16_t Haptic_Driver::getActuatorImpedance(){
+
+  uint16_t regValMSB = _readRegister(CALIB_V2I_H);
+  uint8_t regValLSB  = _readRegister(CALIB_V2I_L);
+  uint8_t currVal    = _readRegister(ACTUATOR3) & 0x1F;
+
+  uint16_t v2iFactor = (regValMSB << 8) | regValLSB; 
+
+  return (v2iFactor * 1.6104)/(currVal + 4);
+  
+}
+
+// Address: 0x0F and 0x10 , bits[7:0]: default value is: 0x01 and 0x0D
 // respectively.
 // Function takes the impedance of the motor intended to
 // be paired with the motor driver IC.The value is dependent on the max current
 // set in 0x0E (ACTUATOR3) so be sure to set that first. Argument is of float type, and in
 // ohms. 
-bool Haptic_Driver::setActuatorLRAfrequency(float frequency){
+bool Haptic_Driver::setActuatorLRAfreq(float frequency){
 
   if( frequency < 0 || frequency > 500.0 )
     return false; 
@@ -229,11 +272,11 @@ bool Haptic_Driver::setActuatorLRAfrequency(float frequency){
   uint16_t lraPeriod;
 
   lraPeriod = 1/(frequency * (1333.32 * pow(10, -9)));
-  msbFrequency = (lraPeriod - (lraPeriod & 0x7F))/128;
-  lsbFrequency = (lraPeriod - 128 * (lraPeriod & 0xF0));
+  msbFrequency = (lraPeriod - (lraPeriod & 0x007F))/128;
+  lsbFrequency = (lraPeriod - 128 * (lraPeriod & 0xFF00));
 
   if( _writeRegister(FRQ_LRA_PER_H, 0x00, msbFrequency, 0) && 
-      _writeRegister(FRQ_LRA_PER_L, 0x00, lsbFrequency, 0) ){
+      _writeRegister(FRQ_LRA_PER_L, 0x80, lsbFrequency, 0) ){
     return true;
   }
   else
@@ -373,13 +416,13 @@ uint8_t Haptic_Driver::getVibrate(){
   
 }
 
-float Haptic_Driver::getThreshold(){
+float Haptic_Driver::getFullBrake(){
 
   uint8_t tempThresh = _readRegister(TOP_CFG2);
   return (tempThresh & 0x0F) * 6.66;
 }
 
-bool Haptic_Driver::setThreshold(uint8_t thresh){
+bool Haptic_Driver::setFullBrake(uint8_t thresh){
 
   if( thresh < 0 || thresh > 15)
     return false;
@@ -652,9 +695,9 @@ uint8_t Haptic_Driver::_readRegister(uint8_t _reg)
   _i2cPort->beginTransmission(_address); 
   _i2cPort->write(_reg); // Moves pointer to register.
   _i2cPort->endTransmission(false); // 'False' here sends a re-"start" message so that bus is not released
-  _i2cPort->requestFrom(_address, 1); // Read the register, only ever once. 
+  _i2cPort->requestFrom(static_cast<uint8_t>(_address), static_cast<uint8_t>(1)); // Read the register, only ever once. 
   uint8_t _regValue = _i2cPort->read();
-  return(_regValue);
+  return _regValue;
 }
 
 // Consecutive Read Mode: I2C_WR_MODE = 0
@@ -739,7 +782,7 @@ bool Haptic_Driver::_writeWaveFormMemory(uint8_t waveFormArray[] ){
 uint8_t Haptic_Driver::_readCommand(uint8_t _numReads)
 {
 
-  _i2cPort->requestFrom(_address, _numReads);  
+  _i2cPort->requestFrom(static_cast<uint8_t>(_address), _numReads);  
   uint8_t someVal = _i2cPort->read();
   return(someVal);
 

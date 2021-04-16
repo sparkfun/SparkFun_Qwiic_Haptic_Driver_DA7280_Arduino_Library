@@ -180,11 +180,15 @@ class Haptic_Driver
     bool setMotor(hapticSettings userSettings);
     hapticSettings getSettings();
     bool setActuatorABSVolt(float);
+    float getActuatorABSVolt();
     bool setActuatorNOMVolt(float);
+    float getActuatorNOMVolt();
     bool setActuatorIMAX(float);
+    uint16_t getActuatorIMAX();
     bool setActuatorImpedance(float);
+    uint16_t getActuatorImpedance();
     uint16_t readImpAdjus();
-    bool setActuatorLRAfrequency(float);
+    bool setActuatorLRAfreq(float);
     bool enableCoinERM();
     bool enableAcceleration(bool);
     bool enableRapidStop(bool);
@@ -194,8 +198,8 @@ class Haptic_Driver
     bool calibrateImpedanceDistance(bool);
     bool setVibrate(uint8_t);
     uint8_t getVibrate();
-    float getThreshold();
-    bool setThreshold(uint8_t);
+    float getFullBrake();
+    bool setFullBrake(uint8_t);
     void createHeader(uint8_t, uint8_t);
     void checkDone();
     void clearIrq(uint8_t);
