@@ -18,6 +18,7 @@ Haptic_Driver::Haptic_Driver(uint8_t address){  _address = address; } //Construc
 bool Haptic_Driver::begin( TwoWire &wirePort )
 {
   
+  delay(2);
   _i2cPort = &wirePort;
   uint8_t chipRev;
 
@@ -86,7 +87,7 @@ bool Haptic_Driver::defaultMotor(){
   sparkSettings.nomVolt = 2.5; //volts
   sparkSettings.absVolt = 2.5; // volts
   sparkSettings.currMax = 170; // milliamps
-  sparkSettings.impedance = 13.8; // ohms
+  sparkSettings.impedance = 12.0; // ohms
   sparkSettings.lraFreq = 170; // hertz
 
   if( setActuatorType(sparkSettings.motorType) && 
@@ -172,12 +173,12 @@ bool Haptic_Driver::setActuatorNOMVolt(float rmsVolt){
 // milliamps.
 bool Haptic_Driver::setActuatorIMAX(float maxCurr){
 
-  if( maxCurr < 0 || maxCurr > 300.0) // Random upper limit - FIX 
+  if( maxCurr < 0 || maxCurr > 300.0) // Random upper limit 
     return false; 
   
   maxCurr = (maxCurr - 28.6)/7.2;
 
-  if( _writeRegister(ACTUATOR3, 0x00, static_cast<uint8_t>(maxCurr), 0) )
+  if( _writeRegister(ACTUATOR3, 0xE0, static_cast<uint8_t>(maxCurr), 0) )
     return true;
   else
     return false; 
@@ -192,18 +193,18 @@ bool Haptic_Driver::setActuatorIMAX(float maxCurr){
 // ohms. 
 bool Haptic_Driver::setActuatorImpedance(float motorImpedance){
 
-  if( motorImpedance < 0 || motorImpedance > 500.0) // Random upper limit - FIX
+  if( motorImpedance < 0 || motorImpedance > 50.0) 
     return false; 
 
   uint8_t msbImpedance; 
   uint8_t lsbImpedance;
   uint16_t v2iFactor;
-  uint8_t maxCurr = _readRegister(ACTUATOR3) | 0x0F;
+  uint8_t maxCurr = _readRegister(ACTUATOR3) | 0x1F;
 
   v2iFactor = (motorImpedance * (maxCurr + 4))/1.6104;
-  msbImpedance = (v2iFactor - (v2iFactor & 0xFF))/256;
-  lsbImpedance = (v2iFactor - (256 * (v2iFactor & 0xF0)));
-
+  msbImpedance = (v2iFactor - (v2iFactor & 0x00FF))/256;
+  lsbImpedance = (v2iFactor - (256 * (v2iFactor & 0x00FF)));
+  
   if( _writeRegister(CALIB_V2I_L, 0x00, lsbImpedance, 0) &&\
       _writeRegister(CALIB_V2I_H, 0x00, msbImpedance, 0) )
     return true;
@@ -372,6 +373,23 @@ uint8_t Haptic_Driver::getVibrate(){
   
 }
 
+float Haptic_Driver::getThreshold(){
+
+  uint8_t tempThresh = _readRegister(TOP_CFG2);
+  return (tempThresh & 0x0F) * 6.66;
+}
+
+bool Haptic_Driver::setThreshold(uint8_t thresh){
+
+  if( thresh < 0 || thresh > 15)
+    return false;
+
+  if( _writeRegister(TOP_CFG2, 0xF0, thresh, 0) )
+    return true; 
+  else
+    return false;
+}
+
 void Haptic_Driver::createHeader(uint8_t numSnippets, uint8_t numSequences){
 }
 
@@ -382,17 +400,6 @@ void Haptic_Driver::clearIrq(uint8_t irq){
 void Haptic_Driver::checkDone(){
 
   uint8_t val =  _readRegister(IRQ_MASK1);
-  Serial.print("IRQ_MASK1: ");
-  Serial.println(val, BIN);
-  Serial.print("IRQ_EVENT_SEQ_DIAG: ");
-  Serial.println(_readRegister(IRQ_EVENT_SEQ_DIAG), BIN);
-  Serial.print("IRQ_EVENT1: ");
-  Serial.println(_readRegister(IRQ_EVENT1), BIN);
-  Serial.print("IRQ_EVENT_WARN_DIAG: ");
-  Serial.println(_readRegister(IRQ_EVENT_WARN_DIAG), BIN);
-  Serial.print("IRQ_STATUS1: ");
-  Serial.println(_readRegister(IRQ_STATUS1), BIN);
-  //return ((val & 0x02) >> 1); 
   
 }
 
@@ -507,8 +514,10 @@ void Haptic_Driver::eraseWaveformMemory(uint8_t mode){
   
 }
 
-
-status_t Haptic_Driver::getIrqEvent(){
+// Address: 0x03, bit[7:0]
+// This retrieves the interrupt value and returns the corresponding interrupt
+// found or success otherwise. 
+event_t Haptic_Driver::getIrqEvent(){
 
   uint8_t irqEvent = _readRegister(IRQ_EVENT1); 
 
@@ -529,10 +538,15 @@ status_t Haptic_Driver::getIrqEvent(){
         return E_ACTUATOR_FAULT;
     case E_OC_FAULT:
         return E_OC_FAULT;
+    default:
+        return HAPTIC_SUCCESS;
   }
 
 }
 
+// Address: 0x05 , bit[7:5]
+// Given an interrupt corresponding to an error with using memory or pwm mode,
+// this returns further information on the error.
 diag_status_t Haptic_Driver::getEventDiag(){
 
   uint8_t diag = _readRegister(IRQ_EVENT_SEQ_DIAG);
@@ -544,10 +558,40 @@ diag_status_t Haptic_Driver::getEventDiag(){
       return E_MEM_FAULT; 
     case E_SEQ_ID_FAULT:
       return E_SEQ_ID_FAULT;
+    default:
+      return NO_DIAG;
   }
 
 }
 
+// Address: 0x06 , bit[7:0]
+// Retu
+status_t Haptic_Driver::getIrqStatus(){
+
+  uint8_t status = _readRegister(IRQ_STATUS1);
+
+  switch( status ){
+    case STA_SEQ_CONTINUE:
+      return STA_SEQ_CONTINUE; 
+    case STA_UVLO_VBAT_OK:
+      return STA_UVLO_VBAT_OK; 
+    case STA_PAT_DONE:
+      return STA_PAT_DONE;
+    case STA_OVERTEMP_CRIT:
+      return STA_OVERTEMP_CRIT;
+    case STA_PAT_FAULT:
+      return STA_PAT_FAULT;
+    case STA_WARNING:
+      return STA_WARNING;
+    case STA_ACTUATOR:
+      return STA_ACTUATOR;
+    case STA_OC:
+      return STA_OC;
+    default:
+      return STATUS_NOM;
+  }
+
+}
 // Address:  , bit[]: default value is: 
 //
 bool Haptic_Driver::setSeqControl(uint8_t repetitions, uint8_t sequenceID){
@@ -566,14 +610,6 @@ bool Haptic_Driver::setSeqControl(uint8_t repetitions, uint8_t sequenceID){
     return false; 
   
 }
-
-bool Haptic_Driver::checkMemFault(){
-
-  uint8_t memFault = _readRegister(IRQ_EVENT_SEQ_DIAG); 
-  return memFault; 
-  
-}
-
 
 
 // This generic function handles I2C write commands for modifying individual

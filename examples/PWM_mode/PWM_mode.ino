@@ -3,10 +3,13 @@
 
 Haptic_Driver hapDrive;
 int event;
+int pwmPin = 5;
+int intPin = 4;
 
 void setup(){
 
-  pinMode(PWM0, OUTPUT);
+  pinMode(pwmPin, OUTPUT);
+  pinMode(intPin, INPUT);
 
   Wire.begin();
   Serial.begin(115200);
@@ -19,23 +22,29 @@ void setup(){
   else
     Serial.println("Ready.");
 
-  analogWrite(PWM0, 60);
-
+  analogWrite(pwmPin, 200);
   hapDrive.setOperationMode(PWM_MODE);
-
 }
 
 void loop(){
 
-  event = hapDrive.getIrqEvent();
+  if( digitalRead(intPin) == LOW ) {
+    Serial.println("Interrupt detected.");
+    event = hapDrive.getIrqEvent();
 
-  if( event == E_SEQ_FAULT ){
-    Serial.println("PWM Value is incorrect.");
-    hapDrive.clearIrq(event);
-  }
+    if( event == E_SEQ_FAULT ){
+      Serial.println("PWM Value is incorrect.");
+      analogWrite(pwmPin, 0);
+      delay(100);
+      analogWrite(pwmPin, 150);
+      hapDrive.clearIrq(event);
+      Serial.print("Operation Mode: ");
+      Serial.println(hapDrive.getOperationMode());
+    }
+  } 
 
   Serial.print("Vibration value from applied PWM signal: ");
   Serial.println(hapDrive.getVibrate(), HEX);
   
-  delay(1000);
+  delay(500);
 }

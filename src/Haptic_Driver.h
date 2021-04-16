@@ -41,20 +41,30 @@ typedef enum {
   E_ACTUATOR_FAULT = 0x40,
   E_OC_FAULT = 0x80
 
-} status_t;
+} event_t;
 
 typedef enum {
 
+  NO_DIAG = 0x00,
   E_PWM_FAULT = 0x20,
   E_MEM_FAULT = 0x40,
   E_SEQ_ID_FAULT = 0x80
 
 } diag_status_t;
 
-enum IRQ_EVENTS {
+typedef enum {
 
+  STATUS_NOM = 0x00,
+  STA_SEQ_CONTINUE = 0x01,
+  STA_UVLO_VBAT_OK = 0x02,
+  STA_PAT_DONE = 0x04,
+  STA_OVERTEMP_CRIT = 0x08,
+  STA_PAT_FAULT = 0x10,
+  STA_WARNING = 0x20,
+  STA_ACTUATOR = 0x40,
+  STA_OC = 0x80
 
-};
+} status_t;
 
 enum OPERATION_MODES {
 
@@ -184,17 +194,19 @@ class Haptic_Driver
     bool calibrateImpedanceDistance(bool);
     bool setVibrate(uint8_t);
     uint8_t getVibrate();
+    float getThreshold();
+    bool setThreshold(uint8_t);
     void createHeader(uint8_t, uint8_t);
     void checkDone();
     void clearIrq(uint8_t);
     bool addSnippet(uint8_t ramp = RAMP, uint8_t amplitude = 2, uint8_t timeBase = 2);
     bool addSnippet(uint8_t snippets[], uint8_t);
     void eraseWaveformMemory(uint8_t);
-    status_t getIrqEvent();
+    event_t getIrqEvent();
     diag_status_t getEventDiag();
+    status_t getIrqStatus();
     bool playFromMemory(bool enable = true);
     bool setSeqControl(uint8_t, uint8_t);
-    bool checkMemFault();
     uint8_t addFrame(uint8_t, uint8_t, uint8_t);
 
     hapticSettings sparkSettings;
