@@ -564,6 +564,9 @@ event_t Haptic_Driver::getIrqEvent(){
 
   uint8_t irqEvent = _readRegister(IRQ_EVENT1); 
 
+  if( !irqEvent)
+    return HAPTIC_SUCCESS;
+
   switch( irqEvent ){
     case E_SEQ_CONTINUE:
         return E_SEQ_CONTINUE;
@@ -582,7 +585,7 @@ event_t Haptic_Driver::getIrqEvent(){
     case E_OC_FAULT:
         return E_OC_FAULT;
     default:
-        return HAPTIC_SUCCESS;
+        return static_cast<event_t>(irqEvent); //In the case that there are more than one.
   }
 
 }
