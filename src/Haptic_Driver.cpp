@@ -440,11 +440,6 @@ void Haptic_Driver::clearIrq(uint8_t irq){
   _writeRegister(IRQ_EVENT1, ~irq, irq, 0);
 }
 
-void Haptic_Driver::checkDone(){
-
-  uint8_t val =  _readRegister(IRQ_MASK1);
-  
-}
 
 bool Haptic_Driver::addSnippet(uint8_t ramp, uint8_t timeBase, uint8_t amplitude){
  
@@ -638,8 +633,7 @@ status_t Haptic_Driver::getIrqStatus(){
   }
 
 }
-// Address:  , bit[]: default value is: 
-//
+
 bool Haptic_Driver::setSeqControl(uint8_t repetitions, uint8_t sequenceID){
 
 
@@ -657,6 +651,25 @@ bool Haptic_Driver::setSeqControl(uint8_t repetitions, uint8_t sequenceID){
   
 }
 
+// Address: 0x07, bit[7:0]: default value is: 0x0
+// Function sets the register to ignore the given "mask" i.e. irq event. 
+bool Haptic_Driver::setMask(uint8_t mask){
+  
+ if( _writeRegister(IRQ_MASK1, 0x00, mask, 0) ) 
+    return true;
+  else
+    return false;
+
+}
+
+// Address: 0x07, bit[7:0]: default value is: 0x0
+// Function returns the event ignoring register. 
+uint8_t Haptic_Driver::getMask(){
+
+  uint8_t regVal = _readRegister(IRQ_MASK1);
+  return regVal; 
+
+}
 
 // This generic function handles I2C write commands for modifying individual
 // bits in an eight bit register. Paramaters include the register's address, a mask 

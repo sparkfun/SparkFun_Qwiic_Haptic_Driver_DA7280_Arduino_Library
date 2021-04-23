@@ -201,7 +201,6 @@ class Haptic_Driver
     float getFullBrake();
     bool setFullBrake(uint8_t);
     void createHeader(uint8_t, uint8_t);
-    void checkDone();
     void clearIrq(uint8_t);
     bool addSnippet(uint8_t ramp = RAMP, uint8_t amplitude = 2, uint8_t timeBase = 2);
     bool addSnippet(uint8_t snippets[], uint8_t);
@@ -211,6 +210,8 @@ class Haptic_Driver
     status_t getIrqStatus();
     bool playFromMemory(bool enable = true);
     bool setSeqControl(uint8_t, uint8_t);
+    bool setMask(uint8_t);
+    uint8_t getMask();
     uint8_t addFrame(uint8_t, uint8_t, uint8_t);
 
     hapticSettings sparkSettings;
