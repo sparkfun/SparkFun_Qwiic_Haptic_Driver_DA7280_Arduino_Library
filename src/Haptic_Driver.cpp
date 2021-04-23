@@ -338,11 +338,22 @@ bool Haptic_Driver::enableRapidStop(bool enable){
 // Enables or disables the "amplitude PID" technology.
 bool Haptic_Driver::enableAmpPid(bool enable){
 
-  if( _writeRegister(TOP_CFG1, 0x00, enable, 0x0) )
+  if( _writeRegister(TOP_CFG1, 0xFE, enable, 0) )
     return true;
   else
     return false; 
 }
+
+// Address: 0x13, bit[0]: default value is 0x0 
+// Enables or disables the "frequency tracking" technology.
+bool Haptic_Driver::enableFreqTrack(bool enable){
+
+  if( _writeRegister(TOP_CFG1, 0xF7, enable, 3) )
+    return true;
+  else
+    return false; 
+}
+
 
 // Address: 0x13, bit[0]: default value is 0x1 
 // Enables or disables internal loop computations, which should only be

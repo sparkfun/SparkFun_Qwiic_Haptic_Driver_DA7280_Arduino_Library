@@ -193,6 +193,7 @@ class Haptic_Driver
     bool enableAcceleration(bool);
     bool enableRapidStop(bool);
     bool enableAmpPid(bool);
+    bool enableFreqTrack(bool);
     bool setBemfFaultLimit(bool);
     bool enableV2iFactorFreeze(bool);
     bool calibrateImpedanceDistance(bool);
