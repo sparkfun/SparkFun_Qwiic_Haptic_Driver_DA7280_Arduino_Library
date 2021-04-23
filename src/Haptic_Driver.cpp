@@ -433,6 +433,58 @@ bool Haptic_Driver::setFullBrake(uint8_t thresh){
     return false;
 }
 
+// Address: 0x07, bit[7:0]: default value is: 0x0
+// Function sets the register to ignore the given "mask" i.e. irq event. 
+bool Haptic_Driver::setMask(uint8_t mask){
+  
+ if( _writeRegister(IRQ_MASK1, 0x00, mask, 0) ) 
+    return true;
+  else
+    return false;
+
+}
+
+// Address: 0x07, bit[7:0]: default value is: 0x0
+// Function returns the event ignoring register. 
+uint8_t Haptic_Driver::getMask(){
+
+  uint8_t regVal = _readRegister(IRQ_MASK1);
+  return regVal; 
+
+}
+
+// Address: 0x17, bit[1:0]: default value is: 0x01 (4.9mV)
+// Limits the voltage that triggers a BEMF fault (E_ACTUATOR_FAULT)
+// A value of zero disable tracking.
+bool Haptic_Driver::setBemf(uint8_t val){
+  
+  if (val < 0 || val > 3)
+    return false; 
+
+  if( _writeRegister(TOP_INT_CFG1, 0xFC, val, 0) )
+    return true; 
+  else
+    return false;
+}
+
+// Address: 0x17, bit[1:0]: default value is: 0x01 (4.9mV)
+// Returns the BEMF value in millivolts (mV).
+float Haptic_Driver::getBemf(){
+  
+  int bemf = _readRegister(TOP_INT_CFG1);
+
+  switch( bemf ){
+    case 0x00:
+      return 0.0;
+    case 0x01:
+      return 4.9;
+    case 0x02:
+      return 27.9;
+    case 0x03:
+      return 49.9;
+  }
+}
+
 void Haptic_Driver::createHeader(uint8_t numSnippets, uint8_t numSequences){
 }
 
@@ -651,26 +703,6 @@ bool Haptic_Driver::setSeqControl(uint8_t repetitions, uint8_t sequenceID){
   
 }
 
-// Address: 0x07, bit[7:0]: default value is: 0x0
-// Function sets the register to ignore the given "mask" i.e. irq event. 
-bool Haptic_Driver::setMask(uint8_t mask){
-  
- if( _writeRegister(IRQ_MASK1, 0x00, mask, 0) ) 
-    return true;
-  else
-    return false;
-
-}
-
-// Address: 0x07, bit[7:0]: default value is: 0x0
-// Function returns the event ignoring register. 
-uint8_t Haptic_Driver::getMask(){
-
-  uint8_t regVal = _readRegister(IRQ_MASK1);
-  return regVal; 
-
-}
-
 // This generic function handles I2C write commands for modifying individual
 // bits in an eight bit register. Paramaters include the register's address, a mask 
 // for bits that are ignored, the bits to write, and the bits' starting
@@ -789,7 +821,6 @@ bool Haptic_Driver::_writeWaveFormMemory(uint8_t waveFormArray[] ){
     return false;
   
 }
-
 
 
 
