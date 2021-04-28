@@ -47,7 +47,11 @@ void setup(){
   else
     Serial.println("Ready.");
 
-  hapDrive.enableAcceleration(false); //Ensure that acceleration is off.
+  // Frequency tracking is done by the IC to ensure that the motor is hitting
+  // its resonant frequency. I found that restricting the PCB (squeezing)
+  // raises an error which stops operation because it can not reach resonance.
+  // I disable here to avoid this error. 
+  hapDrive.enableAcceleration(false); 
 
   Timer1.pwm(pwmPin, power); // Apply signal before setting to PWM mode. 
   delay(10); // An abundance of caution here =P
