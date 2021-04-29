@@ -41,6 +41,8 @@ void setup(){
 
   if( !hapDrive.begin())
     Serial.println("Could not communicate with Haptic Driver.");
+  else
+    Serial.println("Qwiic Haptic Driver DA7280 found!");
 
   if( !hapDrive.defaultMotor() ) 
     Serial.println("Could not set default settings.");

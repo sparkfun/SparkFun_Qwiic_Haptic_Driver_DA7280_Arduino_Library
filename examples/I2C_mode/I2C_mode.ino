@@ -13,7 +13,7 @@ produce a fault and stop functioning.
 
 Haptic_Driver hapDrive;
 
-int event; 
+int event = 0; 
 
 void setup(){
 
@@ -23,7 +23,7 @@ void setup(){
   if( !hapDrive.begin())
     Serial.println("Could not communicate with Haptic Driver.");
   else
-    Serial.println("Press button to activate.");
+    Serial.println("Qwiic Haptic Driver DA7280 found!");
 
   if( !hapDrive.defaultMotor() ) 
     Serial.println("Could not set default settings.");
@@ -44,21 +44,10 @@ void setup(){
 
 void loop(){
 
-  // If uploading often the Haptic Driver IC will throw a fault when the PWM
-  // signal is cut off suddenly without being set into inactive mode. Let's
-  // clear that error (0x10), just in case.
-  event = hapDrive.getIrqEvent();
-  Serial.print("Interrupt: ");
-  Serial.println(event, HEX);
-  Serial.print("Clearing event.");
-  hapDrive.clearIrq(event);
-
   // Max value is 127 with acceleration on (default).
   hapDrive.setVibrate(25);
   delay(500); 
   hapDrive.setVibrate(0); 
   delay(500);
-
-  Serial.println(hapDrive.getIrqEvent(), HEX);
 
 }
