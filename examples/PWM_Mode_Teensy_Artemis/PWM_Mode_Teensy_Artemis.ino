@@ -50,7 +50,7 @@ void setup(){
   // its resonant frequency. I found that restricting the PCB (squeezing)
   // raises an error which stops operation because it can not reach resonance.
   // I disable here to avoid this error. 
-  hapDrive.enableAcceleration(false); 
+  hapDrive.enableFreqTrack(false); 
 
   analogWrite(pwmPin, power); // Apply the signal before entering PWM mode. 
   delay(10); // An abundance of caution here =P
