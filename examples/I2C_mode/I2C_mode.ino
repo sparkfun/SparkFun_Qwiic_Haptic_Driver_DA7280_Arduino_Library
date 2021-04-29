@@ -13,6 +13,8 @@ produce a fault and stop functioning.
 
 Haptic_Driver hapDrive;
 
+int event; 
+
 void setup(){
 
   Wire.begin();

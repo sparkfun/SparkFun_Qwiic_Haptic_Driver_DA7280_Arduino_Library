@@ -524,10 +524,6 @@ bool Haptic_Driver::addSnippet(uint8_t ramp, uint8_t timeBase, uint8_t amplitude
   uint8_t pwlVal = (ramp << 7) | (timeBase << 4) | (amplitude << 0);  
   uint8_t snipAddrLoc = _readRegister(MEM_CTL1); 
 
- // Serial.println("Current header (expecting 0x84): "); 
- // Serial.print("0x"); 
- // Serial.println(snipAddrLoc, HEX); //debug
-
   snpMemCopy[NUM_SNIPPETS] = snpMemCopy[NUM_SNIPPETS] + 1; // Number of Snippets
   snpMemCopy[NUM_SEQUENCES] = snpMemCopy[NUM_SEQUENCES] + 1; // Number of sequences
 
@@ -546,38 +542,17 @@ bool Haptic_Driver::addSnippet(uint8_t ramp, uint8_t timeBase, uint8_t amplitude
   }
   
   lastPosWritten = lastPosWritten + 1; 
-  Serial.print("last position written: "); 
-  Serial.println(lastPosWritten); 
   snpMemCopy[lastPosWritten] = pwlVal; // Write snippet
   lastPosWritten = lastPosWritten + 1; 
   snpMemCopy[lastPosWritten] = frameByte; 
   
-  for(uint8_t i = 0; i < TOTAL_MEM_REGISTERS; i ++){
-    Serial.print(snpMemCopy[i], HEX); 
-    Serial.print("  "); 
-  }
-  Serial.println(""); 
 
   setSeqControl(1, 0);
-  Serial.print("Sequence Control: "); 
-  Serial.println(_readRegister(SEQ_CTL2), HEX); 
 
-  if( _writeWaveFormMemory(snpMemCopy) ) {
-    for( uint8_t x = NUM_SNIPPETS_REG; x <= END_OF_MEM; x++){
-      Serial.print(_readRegister(x), HEX); 
-      Serial.print("  "); 
-    }
-    Serial.println(); 
-    for( uint8_t y = NUM_SNIPPETS_REG; y <= END_OF_MEM; y++){
-      Serial.print(y, HEX); 
-      Serial.print(" "); 
-    }
-    Serial.println(); 
+  if( _writeWaveFormMemory(snpMemCopy) ) 
     return true; 
-  }
   else
     return false; 
-
 }
 
 bool Haptic_Driver::addSnippet(uint8_t snippets[], uint8_t numOfSnippets){
@@ -588,18 +563,14 @@ uint8_t Haptic_Driver::addFrame(uint8_t gain, uint8_t timeBase, uint8_t snipIdLo
 
   uint8_t commandByteZero = 0;  //Command byte zero is mandatory, snip-id begins at one
   commandByteZero = (gain << 5) | (timeBase << 3) | (snipIdLow << 0); 
-  Serial.print("Command Byte: ");
-  Serial.println(commandByteZero, BIN);
   return commandByteZero; 
 
 }
 
 bool Haptic_Driver::playFromMemory(bool enable){
 
- if( _writeRegister(TOP_CTL1, 0xEF, enable, 4) ){
-   Serial.println(_readRegister(TOP_CTL1), BIN);
+ if( _writeRegister(TOP_CTL1, 0xEF, enable, 4) )
    return true;
- }
  else 
    return false;
   
@@ -736,16 +707,6 @@ bool Haptic_Driver::_writeRegister(uint8_t _wReg, uint8_t _mask, uint8_t _bits, 
   
 }
 
-// This generic function does a basic I-squared-C write transaction at the
-// given address, and writes the given _command argument. 
-void Haptic_Driver::_writeCommand(uint8_t _command){
-
-    _i2cPort->beginTransmission(_address);
-    _i2cPort->write(_command);
-    _i2cPort->endTransmission(); 
-
-}
-
 // This generic function reads an eight bit register. It takes the register's
 // address as its' parameter. 
 uint8_t Haptic_Driver::_readRegister(uint8_t _reg)
@@ -757,20 +718,6 @@ uint8_t Haptic_Driver::_readRegister(uint8_t _reg)
   _i2cPort->requestFrom(static_cast<uint8_t>(_address), static_cast<uint8_t>(1)); // Read the register, only ever once. 
   uint8_t _regValue = _i2cPort->read();
   return _regValue;
-}
-
-// Consecutive Read Mode: I2C_WR_MODE = 0
-// Allows for n-number of reads on consecutive registers, beginning at the
-// given register. 
-bool Haptic_Driver::_readConsReg(uint8_t reg[], size_t _numReads){
-  return true;
-}
-
-// Non-Consecutive Read Mode: I2C_WR_MODE = 1
-// Allows for n-number of reads on non-consecutive registers, beginning at the
-// given register but able to jump locations by giving another address. 
-bool Haptic_Driver::_readNonConsReg(uint8_t reg[], size_t numReads){
-  return true; 
 }
 
 // Consecutive Write Mode: I2C_WR_MODE = 0
@@ -833,15 +780,3 @@ bool Haptic_Driver::_writeWaveFormMemory(uint8_t waveFormArray[] ){
   
 }
 
-
-
-// This generic function does a basic I-squared-C read transaction at the given
-// address, taking the number of reads as argument. 
-uint8_t Haptic_Driver::_readCommand(uint8_t _numReads)
-{
-
-  _i2cPort->requestFrom(static_cast<uint8_t>(_address), _numReads);  
-  uint8_t someVal = _i2cPort->read();
-  return(someVal);
-
-}
