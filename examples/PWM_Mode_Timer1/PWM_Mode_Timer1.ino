@@ -27,6 +27,7 @@ Haptic_Driver hapDrive;
 
 int pwmPin = 9; // Timer one ONLY modifies PWM on pins 9 and 10
 int power = 20;
+int event = 0;
 
 void setup(){
 
