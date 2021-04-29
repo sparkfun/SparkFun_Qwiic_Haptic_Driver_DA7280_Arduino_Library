@@ -11,8 +11,8 @@ Arduino library support for the SparkFun Qwiic Haptic Driver to control Dialog S
 Repository Contents
 -------------------
 
+* **/Documents** - Additional documentation for the user. These files are ignored by the IDE.
 * **/examples** - Example sketches for the library (.ino). Run these from the Arduino IDE. 
-* **/extras** - Additional documentation for the user. These files are ignored by the IDE.
 * **/src** - Source files for the library (.cpp, .h).
 * **keywords.txt** - Keywords from this library that will be highlighted in the Arduino IDE. 
 * **library.properties** - General library properties for the Arduino package manager. 
