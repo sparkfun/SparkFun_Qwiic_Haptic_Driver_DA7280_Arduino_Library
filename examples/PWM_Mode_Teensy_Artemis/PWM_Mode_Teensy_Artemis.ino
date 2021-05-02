@@ -30,8 +30,8 @@ void setup(){
   
   //When using Teensy***************************************
   //analogWriteFrequency(pwmPin, 10000); // Set to 10kHz
-  //When usign Artemis***************************************
-  analogWriteFrameWidth(1200); //Set to 10kHz
+  //When using Artemis***************************************
+  analogWriteFrameWidth(1100); //Set to 10kHz (e.g. 10909Hz = 12000000/1100); too close to the boundary and the DA7280 will fault
 
   Wire.begin();
   Serial.begin(115200);
