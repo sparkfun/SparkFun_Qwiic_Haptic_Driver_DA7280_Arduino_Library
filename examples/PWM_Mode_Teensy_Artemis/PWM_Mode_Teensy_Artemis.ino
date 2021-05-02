@@ -19,8 +19,8 @@ produce a fault and stop functioning.
 
 Haptic_Driver hapDrive;
 
-int pwmPin = 5; // Teensy
-//int pwmPin = PWM0; // Artemis
+//int pwmPin = 5; // Teensy
+int pwmPin = 2; // Artemis
 int power = 20;
 int event = 0;
 
@@ -29,9 +29,9 @@ void setup(){
   pinMode(pwmPin, OUTPUT);
   
   //When using Teensy***************************************
-  analogWriteFrequency(pwmPin, 10000); // Set to 10kHz
+  //analogWriteFrequency(pwmPin, 10000); // Set to 10kHz
   //When usign Artemis***************************************
-  //analogWriteFrameWidth(1200); //Set to 10kHz
+  analogWriteFrameWidth(1200); //Set to 10kHz
 
   Wire.begin();
   Serial.begin(115200);
@@ -59,18 +59,18 @@ void setup(){
 
 void loop(){
   
-  // If uploading often the Haptic Driver IC will throw a fault when the PWM
-  // signal is cut off suddenly without being set into inactive mode. Let's
-  // clear that error (0x10), just in case.
-  event = hapDrive.getIrqEvent();
-  Serial.print("Interrupt: ");
-  Serial.println(event, HEX);
-  Serial.print("Clearing event.");
-  hapDrive.clearIrq(event);
-
   // I found that the Haptic Driver stops responding around 100 for the
   // Artemis.
   for (int power = 20; power < 255; power++) {
+
+    // If uploading often the Haptic Driver IC will throw a fault when the PWM
+    // signal is cut off suddenly without being set into inactive mode. Let's
+    // clear that error (0x10), just in case.
+    event = hapDrive.getIrqEvent();
+    Serial.print("Interrupt: ");
+    Serial.println(event, HEX);
+    Serial.println("Clearing event.");
+    hapDrive.clearIrq(event);
     
     analogWrite(pwmPin, power);
     Serial.print("Applied power: ");

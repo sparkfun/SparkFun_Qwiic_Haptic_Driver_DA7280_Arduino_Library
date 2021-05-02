@@ -62,22 +62,23 @@ void setup(){
 }
 
 void loop(){
-
-  // If uploading often the Haptic Driver IC will throw a fault when the PWM
-  // signal is cut off suddenly without being set into inactive mode. Let's
-  // clear that error (0x10), just in case.
-  event = hapDrive.getIrqEvent();
-  Serial.print("Interrupt: ");
-  Serial.println(event, HEX);
-  Serial.print("Clearing event.");
-  hapDrive.clearIrq(event);
-
   
   for (int power = 10; power < 255; power++) {
+
+    // If uploading often the Haptic Driver IC will throw a fault when the PWM
+    // signal is cut off suddenly without being set into inactive mode. Let's
+    // clear that error (0x10), just in case.
+    event = hapDrive.getIrqEvent();
+    Serial.print("Interrupt: ");
+    Serial.println(event, HEX);
+    Serial.println("Clearing event.");
+    hapDrive.clearIrq(event);
     
     Timer1.pwm(pwmPin, power);
+    Serial.print("Applied power: ");
+    Serial.println(power);
     Serial.print("Vibration value: ");
-    Serial.println(hapDrive.getVibrate(), HEX);
+    Serial.println(hapDrive.getVibrate());
     delay(100);
 
 
