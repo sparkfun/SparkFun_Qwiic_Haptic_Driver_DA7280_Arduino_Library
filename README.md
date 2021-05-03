@@ -27,7 +27,8 @@ Documentation
 Products that use this Library 
 ---------------------------------
 
-* [ROB-17590](https://www.sparkfun.com/products/17590)
+* [ROB-18247](https://www.sparkfun.com/products/18247) - Kit version with the Qwiic Haptic Driver, LRA motor, and wires separate
+* [ROB-17590](https://www.sparkfun.com/products/17590) - Qwiic Haptic Driver with LRA motor attached to board
 
 Version History
 ---------------
