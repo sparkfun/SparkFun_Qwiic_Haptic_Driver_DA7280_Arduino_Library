@@ -31,6 +31,7 @@ void setup(){
   //When using Teensy***************************************
   //analogWriteFrequency(pwmPin, 10000); // Set to 10kHz
   //When using Artemis***************************************
+  //analogWriteResolution(8); //This example assumes that analogWriteResolution() is set to 8-bits on the Artemis, uncomment this line if needed
   analogWriteFrameWidth(1100); //Set to 10kHz (e.g. 10909Hz = 12000000/1100); too close to the boundary and the DA7280 will fault
 
   Wire.begin();
@@ -59,8 +60,8 @@ void setup(){
 
 void loop(){
   
-  // I found that the Haptic Driver stops responding around 100 for the
-  // Artemis.
+  // I found that the Haptic Driver stops responding when the
+  // applied power is around 254 for the Artemis.
   for (int power = 20; power < 255; power++) {
 
     // If uploading often the Haptic Driver IC will throw a fault when the PWM
