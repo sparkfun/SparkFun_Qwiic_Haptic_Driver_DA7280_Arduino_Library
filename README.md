@@ -21,8 +21,8 @@ Documentation
 --------------
 
 * **[Installing an Arduino Library Guide](https://learn.sparkfun.com/tutorials/installing-an-arduino-library)** - Basic information on how to install an Arduino library.
-* **[TimerOne Arduino Library by Paul Stoffregen](https://github.com/PaulStoffregen/TimerOne)** - Additional Arduino Library if you are using the PWM example with an ATmega328P
-* **[Hookup Guide](https://learn.sparkfun.com/tutorials/1461)** - Basic hookup guide for the DA7280 Haptic Driver
+* **[TimerOne Arduino Library by Paul Stoffregen](https://github.com/PaulStoffregen/TimerOne)** - Additional Arduino Library if you are using the PWM example with an ATmega328P.
+* **[Hookup Guide](https://learn.sparkfun.com/tutorials/1461)** - Basic hookup guide for the DA7280 Haptic Driver.
 * **[Product Repository](https://github.com/sparkfun/Qwiic_Haptic_Driver_DA7280)** - Main repository (including hardware files) for the DA7280 Haptic Driver.
 
 
