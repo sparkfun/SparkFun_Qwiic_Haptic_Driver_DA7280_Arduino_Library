@@ -44,6 +44,14 @@ void setup(){
 
 void loop(){
 
+  // If uploading often the Haptic Driver IC will throw a fault. Let's
+  // clear that error (0x10), just in case.
+  //event = hapDrive.getIrqEvent();
+  //Serial.print("Interrupt: ");
+  //Serial.println(event, HEX);
+  //Serial.println("Clearing event.");
+  //hapDrive.clearIrq(event);
+
   // Max value is 127 with acceleration on (default).
   hapDrive.setVibrate(25);
   delay(500); 
