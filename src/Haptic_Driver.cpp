@@ -84,11 +84,11 @@ bool Haptic_Driver::defaultMotor(){
 
 
   sparkSettings.motorType = LRA_TYPE;
-  sparkSettings.nomVolt = 2.5; //volts
-  sparkSettings.absVolt = 2.5; // volts
-  sparkSettings.currMax = 170; // milliamps
-  sparkSettings.impedance = 10.0; // ohms
-  sparkSettings.lraFreq = 200; // hertz
+  sparkSettings.nomVolt = 2.5; //volts - not used when acceleration is off, set nominal when on
+  sparkSettings.absVolt = 2.5; // volts - when acceleration is off, set this only
+  sparkSettings.currMax = 165.4; // milliamps - 
+  sparkSettings.impedance = 13.8; // ohms
+  sparkSettings.lraFreq = 170; // hertz
 
   if( setActuatorType(sparkSettings.motorType) && 
       setActuatorABSVolt(sparkSettings.absVolt) &&
