@@ -84,8 +84,8 @@ bool Haptic_Driver::defaultMotor(){
 
 
   sparkSettings.motorType = LRA_TYPE;
-  sparkSettings.nomVolt = 2.5; //volts - not used when acceleration is off, set nominal when on
-  sparkSettings.absVolt = 2.5; // volts - when acceleration is off, set this only
+  sparkSettings.nomVolt = 0; //volts - set to 2.5 when acceleration is ON
+  sparkSettings.absVolt = 2.26; // volts - when acceleration is off, set this only
   sparkSettings.currMax = 165.4; // milliamps - 
   sparkSettings.impedance = 13.8; // ohms
   sparkSettings.lraFreq = 170; // hertz
@@ -402,7 +402,7 @@ bool Haptic_Driver::setVibrate(uint8_t val){
 
   if( accelState == ENABLE ){
     if( val >  0x7F ) 
-      val == 0x7F; // Just limit the argument to the physical limit
+      val = 0x7F; // Just limit the argument to the physical limit
   }
   else {
     if( val > 0xFF ) 

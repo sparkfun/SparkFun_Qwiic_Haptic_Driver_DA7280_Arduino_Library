@@ -127,7 +127,7 @@ enum REGISTERS {
   TOP_INT_CFG8 = 0x20,
   TOP_CTL1 = 0x22,
   TOP_CTL2,
-  SEG_CTL1,
+  SEQ_CTL1,
   SWG_C1,
   SWG_C2,
   SWG_C3,
