@@ -226,7 +226,7 @@ bool Haptic_Driver::setActuatorImpedance(float motorImpedance)
     uint8_t msbImpedance;
     uint8_t lsbImpedance;
     uint16_t v2iFactor;
-    uint8_t maxCurr = _readRegister(ACTUATOR3) | 0x1F;
+    uint8_t maxCurr = _readRegister(ACTUATOR3) & 0x1F;
 
     v2iFactor = (motorImpedance * (maxCurr + 4)) / 1.6104;
     msbImpedance = (v2iFactor - (v2iFactor & 0x00FF)) / 256;
