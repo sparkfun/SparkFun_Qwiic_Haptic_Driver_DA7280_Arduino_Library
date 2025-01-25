@@ -499,6 +499,8 @@ float Haptic_Driver::getBemf()
     case 0x03:
         return 49.9;
     }
+
+    return 0.0;
 }
 
 void Haptic_Driver::createHeader(uint8_t numSnippets, uint8_t numSequences)
