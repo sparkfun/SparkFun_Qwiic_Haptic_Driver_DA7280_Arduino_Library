@@ -472,7 +472,7 @@ uint8_t Haptic_Driver::getMask()
 bool Haptic_Driver::setBemf(uint8_t val)
 {
 
-    if (val < 0 || val > 3)
+    if ((val < 0) || (val > 3))
         return false;
 
     if (_writeRegister(TOP_INT_CFG1, 0xFC, val, 0))
@@ -498,6 +498,8 @@ float Haptic_Driver::getBemf()
         return 27.9;
     case 0x03:
         return 49.9;
+    default:
+        return 4.9;
     }
 }
 
@@ -513,13 +515,13 @@ void Haptic_Driver::clearIrq(uint8_t irq)
 bool Haptic_Driver::addSnippet(uint8_t ramp, uint8_t timeBase, uint8_t amplitude)
 {
 
-    if (ramp < 0 | ramp > 1)
+    if ((ramp < 0) | (ramp > 1))
         return false;
 
-    if (amplitude < 0 | amplitude > 15)
+    if ((amplitude < 0) | (amplitude > 15))
         return false;
 
-    if (timeBase < 0 | timeBase > 7)
+    if ((timeBase < 0) | (timeBase > 7))
         return false;
 
     setOperationMode(INACTIVE);
@@ -528,7 +530,7 @@ bool Haptic_Driver::addSnippet(uint8_t ramp, uint8_t timeBase, uint8_t amplitude
         _writeRegister(MEM_CTL2, 0x7F, UNLOCKED, 7);
 
     uint8_t pwlVal = (ramp << 7) | (timeBase << 4) | (amplitude << 0);
-    uint8_t snipAddrLoc = _readRegister(MEM_CTL1);
+    _readRegister(MEM_CTL1);
 
     snpMemCopy[NUM_SNIPPETS] = snpMemCopy[NUM_SNIPPETS] + 1;   // Number of Snippets
     snpMemCopy[NUM_SEQUENCES] = snpMemCopy[NUM_SEQUENCES] + 1; // Number of sequences
@@ -587,7 +589,7 @@ bool Haptic_Driver::playFromMemory(bool enable)
 void Haptic_Driver::eraseWaveformMemory(uint8_t mode)
 {
 
-    for (uint8_t i; i = BEGIN_SNP_MEM; i < TOTAL_MEM_REGISTERS)
+    for (size_t i = BEGIN_SNP_MEM; i < TOTAL_MEM_REGISTERS; i++)
     {
         snpMemCopy[i] = 0;
     }
@@ -682,10 +684,10 @@ status_t Haptic_Driver::getIrqStatus()
 bool Haptic_Driver::setSeqControl(uint8_t repetitions, uint8_t sequenceID)
 {
 
-    if (sequenceID < 0 | sequenceID > 15)
+    if ((sequenceID < 0) | (sequenceID > 15))
         return false;
 
-    if (repetitions < 0 | repetitions > 15)
+    if ((repetitions < 0) | (repetitions > 15))
         return false;
 
     if (_writeRegister(SEQ_CTL2, 0xF0, sequenceID, 0) && _writeRegister(SEQ_CTL2, 0x0F, repetitions, 4))
